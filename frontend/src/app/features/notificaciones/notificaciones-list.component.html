@@ -1,0 +1,155 @@
+<div class="space-y-6">
+  <!-- Header de la sección y acciones -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-200">
+    <div>
+      <h2 class="text-2xl font-bold text-slate-800">Bandeja de Notificaciones Electrónicas</h2>
+      <p class="text-sm text-slate-500">Gestión, custodia y depósito ante la Casilla Electrónica MTC / DRTC Puno</p>
+    </div>
+    <div class="flex gap-2">
+      <button class="btn btn-outline" (click)="recargar()">
+        🔄 Actualizar
+      </button>
+      <a routerLink="/nueva" class="btn btn-primary">
+        ➕ Nueva Notificación
+      </a>
+    </div>
+  </div>
+
+  <!-- Métricas Rápidas (Cards) con Tailwind -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+    <div class="card border-l-4 border-l-slate-400">
+      <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Registradas</div>
+      <div class="text-2xl font-bold text-slate-800 mt-1">{{ service.totalNotificaciones() }}</div>
+    </div>
+    <div class="card border-l-4 border-l-amber-500">
+      <div class="text-xs font-semibold text-amber-600 uppercase tracking-wider">Borradores</div>
+      <div class="text-2xl font-bold text-amber-800 mt-1">{{ service.totalBorradores() }}</div>
+    </div>
+    <div class="card border-l-4 border-l-indigo-500">
+      <div class="text-xs font-semibold text-indigo-600 uppercase tracking-wider">Firmadas</div>
+      <div class="text-2xl font-bold text-indigo-800 mt-1">{{ service.totalFirmadas() }}</div>
+    </div>
+    <div class="card border-l-4 border-l-sky-500">
+      <div class="text-xs font-semibold text-sky-600 uppercase tracking-wider">Depositadas MTC</div>
+      <div class="text-2xl font-bold text-sky-800 mt-1">{{ service.totalDepositadas() }}</div>
+    </div>
+    <div class="card border-l-4 border-l-emerald-500">
+      <div class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Leídas / Concluidas</div>
+      <div class="text-2xl font-bold text-emerald-800 mt-1">{{ service.totalLeidas() }}</div>
+    </div>
+  </div>
+
+  <!-- Indicador de Carga -->
+  @if (service.loading()) {
+    <div class="text-center py-8 text-slate-500">
+      <p class="animate-pulse text-sm">Cargando notificaciones y sincronizando con MinIO y MTC...</p>
+    </div>
+  }
+
+  <!-- Notificación de Error -->
+  @if (service.error()) {
+    <div class="p-4 bg-rose-50 border border-rose-200 rounded-lg text-rose-800 text-sm">
+      <strong>Aviso de Sistema:</strong> {{ service.error() }}
+    </div>
+  }
+
+  <!-- Tabla de Notificaciones -->
+  <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+          <tr>
+            <th class="px-4 py-3">Expediente / Acto</th>
+            <th class="px-4 py-3">Asunto</th>
+            <th class="px-4 py-3">Casilla MTC</th>
+            <th class="px-4 py-3">Estado Legal</th>
+            <th class="px-4 py-3">Documentos MinIO</th>
+            <th class="px-4 py-3">Acuses MTC</th>
+            <th class="px-4 py-3 text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          @for (item of service.notificaciones(); track item.id) {
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="px-4 py-3">
+                <div class="font-semibold text-slate-800">{{ item.codigo_expediente }}</div>
+                <div class="text-xs text-slate-500">{{ item.numero_acto_administrativo }}</div>
+              </td>
+              <td class="px-4 py-3 max-w-xs">
+                <div class="font-medium text-slate-700 truncate" [title]="item.asunto">{{ item.asunto }}</div>
+                <div class="text-xs text-slate-400">{{ item.fecha_emision | date:'dd/MM/yyyy HH:mm' }}</div>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                <span class="font-mono text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded">
+                  {{ item.casilla?.codigo_casilla || 'Sin asignar' }}
+                </span>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                <span class="badge" [ngClass]="getBadgeClass(item.estado)">
+                  {{ item.estado }}
+                </span>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                @for (doc of item.documentos; track doc.id) {
+                  <div class="mb-1">
+                    <a [href]="doc.download_url" target="_blank" 
+                       class="text-xs text-sky-600 hover:text-sky-800 underline flex items-center gap-1 font-medium">
+                      📄 {{ doc.tipo_documento === 'DOCUMENTO_FIRMADO' ? 'Firmado' : 'Original' }}
+                    </a>
+                  </div>
+                }
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                @if (item.acuses.length === 0) {
+                  <span class="text-xs text-slate-400 italic">Pendiente de depósito</span>
+                } @else {
+                  @for (acuse of item.acuses; track acuse.id) {
+                    <div>
+                      <a [href]="acuse.download_url" target="_blank" 
+                         class="text-xs text-emerald-600 hover:text-emerald-800 font-semibold underline flex items-center gap-1">
+                        📑 {{ acuse.tipo_acuse === 'DEPOSITO' ? 'Acuse Depósito' : 'Acuse Lectura' }}
+                      </a>
+                    </div>
+                  }
+                }
+              </td>
+              <td class="px-4 py-3 text-right whitespace-nowrap">
+                <div class="flex gap-2 justify-end">
+                  @if (item.estado === 'BORRADOR') {
+                    <button class="btn btn-sm btn-accent text-xs" (click)="firmar(item.id)">
+                      ✍️ Firmar
+                    </button>
+                    <button class="btn btn-sm btn-primary text-xs" (click)="depositar(item.id)">
+                      📤 Depositar MTC
+                    </button>
+                  }
+                  @if (item.estado === 'FIRMADO') {
+                    <button class="btn btn-sm btn-primary text-xs" (click)="depositar(item.id)">
+                      📤 Depositar MTC
+                    </button>
+                  }
+                  @if (item.estado === 'DEPOSITADO') {
+                    <button class="btn btn-sm btn-outline text-xs text-sky-700 font-semibold" (click)="sincronizar(item.id)">
+                      🔄 Verificar Lectura MTC
+                    </button>
+                  }
+                  @if (item.estado === 'LEIDO_NOTIFICADO') {
+                    <span class="text-xs text-emerald-700 font-bold">
+                      ✓ Notificado Eficaz
+                    </span>
+                  }
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="px-4 py-12 text-center text-slate-400">
+                No hay notificaciones registradas. Comience registrando una desde "Nueva Notificación".
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

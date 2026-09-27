@@ -1,0 +1,36 @@
+from enum import Enum
+
+
+class TipoDocumentoIdentidad(str, Enum):
+    DNI = "DNI"
+    RUC = "RUC"
+    CE = "CE"
+    PASAPORTE = "PASAPORTE"
+
+
+class EstadoCasilla(str, Enum):
+    ACTIVA = "ACTIVA"
+    SUSPENDIDA = "SUSPENDIDA"
+    NO_HABILITADA = "NO_HABILITADA"
+
+
+class EstadoNotificacion(str, Enum):
+    BORRADOR = "BORRADOR"
+    PENDIENTE_FIRMA = "PENDIENTE_FIRMA"
+    FIRMADO = "FIRMADO"
+    EN_COLA_DEPOSITO = "EN_COLA_DEPOSITO"
+    DEPOSITADO = "DEPOSITADO"
+    LEIDO_NOTIFICADO = "LEIDO_NOTIFICADO"
+    NOTIFICADO_POR_PLAZO = "NOTIFICADO_POR_PLAZO"
+    ERROR_ENVIO = "ERROR_ENVIO"
+
+
+class TipoDocumentoAdjunto(str, Enum):
+    ACTO_ADMINISTRATIVO_ORIGINAL = "ACTO_ADMINISTRATIVO_ORIGINAL"
+    DOCUMENTO_FIRMADO = "DOCUMENTO_FIRMADO"
+    ANEXO = "ANEXO"
+
+
+class TipoAcuse(str, Enum):
+    DEPOSITO = "DEPOSITO"
+    LECTURA_NOTIFICACION = "LECTURA_NOTIFICACION"

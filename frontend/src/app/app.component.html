@@ -1,0 +1,32 @@
+<div class="min-h-screen flex flex-col bg-slate-50 font-sans">
+  <!-- Barra Superior Institucional -->
+  <header class="bg-drtc-700 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">🏛️</span>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight">Sistema de Notificaciones Electrónicas</h1>
+          <p class="text-xs text-drtc-100">DRTC Puno / Integración Casilla Electrónica MTC</p>
+        </div>
+      </div>
+      <nav class="flex items-center gap-3">
+        <a routerLink="/" class="text-xs font-semibold text-white/90 hover:text-white px-3 py-1.5 rounded-md hover:bg-drtc-900 transition-colors">
+          📋 Bandeja General
+        </a>
+        <a routerLink="/nueva" class="btn btn-sm btn-accent text-xs">
+          ➕ Emitir Notificación
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Contenido Central -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- Pie de Página -->
+  <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
+    <p>Sistema Oficial de Casillas Electrónicas | Custodia Legal MinIO S3 & PostgreSQL | Asistencia Gemini AI</p>
+  </footer>
+</div>

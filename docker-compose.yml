@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  # Base de Datos Relacional: PostgreSQL con soporte JSONB para respuestas MTC
+  postgres:
+    image: postgres:16-alpine
+    container_name: casillas_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-casillas_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-casillas_secret_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-casillas_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-casillas_user} -d ${POSTGRES_DB:-casillas_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Almacenamiento de Objetos S3-compatible: MinIO para PDFs y Acuses
+  minio:
+    image: minio/minio:latest
+    container_name: casillas_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+    ports:
+      - "${MINIO_PORT:-9000}:9000"       # S3 API
+      - "${MINIO_CONSOLE_PORT:-9001}:9001" # Web Console UI
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # Auto-configurador de Buckets de MinIO (Crea el bucket oficial al iniciar)
+  minio-init:
+    image: minio/mc:latest
+    container_name: casillas_minio_init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin123};
+      /usr/bin/mc mb --ignore-existing local/${MINIO_BUCKET_NAME:-casillas-notificaciones};
+      /usr/bin/mc anonymous set download local/${MINIO_BUCKET_NAME:-casillas-notificaciones};
+      exit 0;
+      "
+
+  # Redis para broker de tareas de background, locks y cache de tokens MTC
+  redis:
+    image: redis:7-alpine
+    container_name: casillas_redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Backend API: FastAPI con recarga en caliente
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: casillas_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      ENVIRONMENT: development
+      POSTGRES_SERVER: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-casillas_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-casillas_secret_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-casillas_db}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-casillas_user}:${POSTGRES_PASSWORD:-casillas_secret_pass}@postgres:5432/${POSTGRES_DB:-casillas_db}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME:-casillas-notificaciones}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MTC_BASE_URL: ${MTC_BASE_URL:-https://api-casilla-testing.mtc.gob.pe}
+      MTC_CLIENT_ID: ${MTC_CLIENT_ID}
+      MTC_CLIENT_SECRET: ${MTC_CLIENT_SECRET}
+      MTC_API_KEY: ${MTC_API_KEY}
+    volumes:
+      - ./backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+    name: casillas_postgres_data
+  minio_data:
+    name: casillas_minio_data
+  redis_data:
+    name: casillas_redis_data

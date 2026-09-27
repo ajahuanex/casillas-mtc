@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Estilos Globales para el Sistema de Casillas MTC / DRTC */
+:root {
+  --primary: #004d40;       /* Verde institucional DRTC */
+  --primary-hover: #00251a;
+  --accent: #d9230f;        /* Rojo representativo MTC */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --bg-page: #f8fafc;
+  --card-bg: #ffffff;
+  --border-color: #e2e8f0;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg-page);
+  color: #1e293b;
+}
+
+/* Clases de apoyo */
+.card {
+  @apply bg-white border border-slate-200 rounded-lg shadow-sm p-5;
+}
+
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider;
+
+  &.badge-borrador { @apply bg-slate-100 text-slate-700; }
+  &.badge-pendiente { @apply bg-amber-100 text-amber-800; }
+  &.badge-firmado { @apply bg-indigo-100 text-indigo-800; }
+  &.badge-depositado { @apply bg-sky-100 text-sky-800; }
+  &.badge-leido { @apply bg-emerald-100 text-emerald-800; }
+  &.badge-error { @apply bg-rose-100 text-rose-800; }
+}
+
+.btn {
+  @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all duration-150 cursor-pointer border border-transparent;
+
+  &.btn-primary {
+    @apply bg-drtc-700 text-white hover:bg-drtc-900 shadow-sm;
+  }
+
+  &.btn-accent {
+    @apply bg-red-600 text-white hover:bg-red-700 shadow-sm;
+  }
+
+  &.btn-outline {
+    @apply border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+  }
+
+  &.btn-gemini {
+    @apply bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white hover:opacity-95 shadow-sm;
+  }
+
+  &.btn-sm {
+    @apply px-2.5 py-1 text-xs;
+  }
+}
