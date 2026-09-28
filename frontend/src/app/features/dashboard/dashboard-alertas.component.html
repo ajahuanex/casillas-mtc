@@ -1,0 +1,554 @@
+<div class="space-y-6">
+  <!-- ENCABEZADO DE MÓDULO & ACCIONES RÁPIDAS -->
+  <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-3 border-b border-outline-variant/60 dark:border-outline/40">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="h-6 w-1.5 bg-red-600 rounded-sm"></span>
+        <h1 class="text-xl md:text-2xl font-bold tracking-tight text-on-surface dark:text-inverse-on-surface">
+          Control de Tiempos y Alertas Procesales de Casilla Electrónica
+        </h1>
+        <span class="bg-primary/10 dark:bg-primary-fixed/20 text-primary dark:text-inverse-primary text-xs font-semibold px-2 py-0.5 rounded border border-primary/20">
+          TUO Ley 27444 & D.S. 001-2020-MTC
+        </span>
+      </div>
+      <p class="text-xs md:text-sm text-on-surface-variant dark:text-outline-variant mt-1">
+        Supervisión telemática de eficacia procesal, cómputo de días hábiles y configuración automática de Ficción Legal (5 días hábiles sin apertura).
+      </p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <button (click)="cargarDashboard()" [disabled]="cargando()" class="inline-flex items-center gap-1.5 bg-surface-container-lowest dark:bg-surface-container px-3 py-1.5 border border-outline-variant dark:border-outline rounded text-xs font-semibold hover:bg-surface-container-low transition-colors shadow-sm text-on-surface dark:text-inverse-on-surface">
+        <svg class="w-4 h-4" [class.animate-spin]="cargando()" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+        Sincronizar Alertas
+      </button>
+
+      <a routerLink="/notificaciones/nueva" class="inline-flex items-center gap-1.5 bg-primary-container hover:bg-primary text-white px-4 py-1.5 rounded text-xs font-semibold transition-colors shadow-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        Nueva Emisión MTC
+      </a>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 2: BUSCADOR Y VERIFICADOR INMEDIATO DE CASILLA POR RUC / DNI -->
+  <section class="bg-surface-container-lowest dark:bg-inverse-surface rounded-xl border border-outline-variant/80 dark:border-outline/60 p-4 shadow-sm relative overflow-hidden">
+    <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-blue-600"></div>
+
+    <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-5">
+      <!-- Input de búsqueda rápida -->
+      <div class="w-full lg:w-5/12 space-y-2">
+        <div class="flex items-center justify-between">
+          <label class="text-xs font-bold uppercase text-on-surface-variant dark:text-outline-variant flex items-center gap-1.5" for="ruc-search">
+            <svg class="w-4 h-4 text-primary dark:text-inverse-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            Verificación Inmediata de Casilla Electrónica MTC
+          </label>
+          <span class="text-[10px] font-mono text-primary dark:text-inverse-primary bg-primary/10 dark:bg-primary-fixed/20 px-2 py-0.5 rounded font-semibold">
+            Interconexión MTC Nacional
+          </span>
+        </div>
+
+        <div class="flex gap-2">
+          <div class="relative flex-1">
+            <input 
+              id="ruc-search"
+              [(ngModel)]="rucConsulta" 
+              (keyup.enter)="consultarCasillaMTC()"
+              placeholder="Ingrese 11 dígitos RUC o 8 dígitos DNI" 
+              class="w-full h-10 px-3 pr-9 text-sm font-mono bg-white dark:bg-inverse-surface border border-outline-variant dark:border-outline rounded-lg text-on-surface dark:text-inverse-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all shadow-inner"
+              type="text" 
+              maxlength="11"
+            />
+            <span *ngIf="resultadoVerificacion()?.tiene_casilla" class="absolute right-3 top-2.5 text-emerald-600 dark:text-emerald-400">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+            </span>
+          </div>
+
+          <button 
+            (click)="consultarCasillaMTC()" 
+            [disabled]="verificandoRuc()" 
+            class="h-10 px-4 bg-primary hover:bg-primary-container text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap shadow-sm disabled:opacity-50"
+          >
+            <svg *ngIf="verificandoRuc()" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+            <svg *ngIf="!verificandoRuc()" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Consultar Casilla en MTC
+          </button>
+        </div>
+
+        <p *ngIf="errorVerificacion()" class="text-xs text-red-600 dark:text-red-400 font-medium">
+          {{ errorVerificacion() }}
+        </p>
+      </div>
+
+      <!-- Divisor visual -->
+      <div class="hidden lg:block w-px h-16 bg-outline-variant/60 dark:bg-outline/40"></div>
+
+      <!-- Tarjeta de Resultado en Vivo -->
+      <div class="w-full lg:w-7/12 bg-surface-container-low dark:bg-surface-container/40 p-3.5 rounded-lg border border-outline-variant/60 dark:border-outline/40 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <ng-container *ngIf="resultadoVerificacion() as res">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-bold text-on-surface dark:text-inverse-on-surface">
+                {{ res.razon_social || 'TITULAR DE CASILLA IDENTIFICADO' }}
+              </span>
+              <span [ngClass]="res.tiene_casilla ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700' : 'bg-red-100 dark:bg-red-950/60 text-red-800 dark:text-red-300 border-red-300 dark:border-red-700'" class="text-[10px] font-bold px-2 py-0.5 rounded border flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full" [ngClass]="res.tiene_casilla ? 'bg-emerald-500' : 'bg-red-500'"></span>
+                {{ res.tiene_casilla ? 'Casilla Habilitada' : 'No Afiliado' }}
+              </span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-on-surface-variant dark:text-outline-variant">
+              <span>Casilla: <strong class="font-mono text-on-surface dark:text-inverse-on-surface">{{ res.codigo_casilla }}</strong></span>
+              <span>Doc: <span class="font-mono font-medium">{{ res.numero_documento }}</span></span>
+              <span>Régimen: <strong class="text-blue-700 dark:text-blue-300">Transporte Terrestre</strong></span>
+            </div>
+          </div>
+
+          <div class="flex flex-col items-start md:items-end justify-center border-t md:border-t-0 md:border-l border-outline-variant/60 dark:border-outline/40 pt-2 md:pt-0 md:pl-4">
+            <div class="flex items-center gap-1 text-xs font-semibold" [ngClass]="res.tiene_casilla ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+              </svg>
+              {{ res.tiene_casilla ? 'Domicilio Telemático Válido' : 'Requiere Notificación Física' }}
+            </div>
+            <span class="text-[10px] font-mono text-on-surface-variant dark:text-outline-variant">
+              {{ res.normativa_aplicable }}
+            </span>
+          </div>
+        </ng-container>
+
+        <ng-container *ngIf="!resultadoVerificacion()">
+          <div class="text-xs text-on-surface-variant dark:text-outline-variant py-2">
+            Ingrese un número de RUC de empresa de transportes o DNI de infractor para consultar el estado telemático ante el MTC.
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECCIÓN 3: 5 KPIS EJECUTIVOS DE CONTROL DE PLAZOS Y EFICACIA -->
+  <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+    <!-- KPI 1: Total Notificaciones -->
+    <div (click)="setFiltro('TODOS')" class="cursor-pointer transition-all hover:scale-[1.02] bg-surface-container-lowest dark:bg-inverse-surface p-3.5 rounded-xl border border-outline-variant/70 dark:border-outline/50 shadow-sm relative overflow-hidden" [class.ring-2]="filtroActivo() === 'TODOS'" [class.ring-primary]="filtroActivo() === 'TODOS'">
+      <div class="flex justify-between items-start">
+        <span class="text-[11px] uppercase font-bold text-on-surface-variant dark:text-outline-variant">Total Notificaciones</span>
+        <span class="p-1 rounded bg-surface-container dark:bg-surface-container-high text-primary dark:text-inverse-primary">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+        </span>
+      </div>
+      <div class="mt-2 flex items-baseline gap-2">
+        <span class="text-2xl font-bold font-mono text-on-surface dark:text-inverse-on-surface">{{ kpis().total_notificaciones }}</span>
+        <span class="text-[11px] text-on-surface-variant dark:text-outline-variant font-medium">expedientes</span>
+      </div>
+      <div class="mt-2 text-[10px] text-blue-600 dark:text-blue-400 font-semibold flex items-center gap-1">
+        <span>Bandeja central MTC / DRTC</span>
+      </div>
+    </div>
+
+    <!-- KPI 2: En Plazo Ordinario (>48h) [Verde] -->
+    <div (click)="setFiltro('EN_PLAZO')" class="cursor-pointer transition-all hover:scale-[1.02] bg-surface-container-lowest dark:bg-inverse-surface p-3.5 rounded-xl border border-emerald-300 dark:border-emerald-800 shadow-sm relative overflow-hidden" [class.ring-2]="filtroActivo() === 'EN_PLAZO'" [class.ring-emerald-500]="filtroActivo() === 'EN_PLAZO'">
+      <div class="flex justify-between items-start">
+        <span class="text-[11px] uppercase font-bold text-emerald-800 dark:text-emerald-300">En Plazo Ordinario</span>
+        <span class="p-1 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </span>
+      </div>
+      <div class="mt-2 flex items-baseline gap-2">
+        <span class="text-2xl font-bold font-mono text-emerald-700 dark:text-emerald-300">{{ kpis().en_plazo_ordinario }}</span>
+        <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">> 48h hábiles</span>
+      </div>
+      <div class="mt-2 text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">
+        Derecho a descargo vigente
+      </div>
+    </div>
+
+    <!-- KPI 3: Alerta Por Vencer (<=48h) [Amarillo] -->
+    <div (click)="setFiltro('ALERTA_48H')" class="cursor-pointer transition-all hover:scale-[1.02] bg-surface-container-lowest dark:bg-inverse-surface p-3.5 rounded-xl border border-amber-300 dark:border-amber-700 shadow-sm relative overflow-hidden" [class.ring-2]="filtroActivo() === 'ALERTA_48H'" [class.ring-amber-500]="filtroActivo() === 'ALERTA_48H'">
+      <div class="flex justify-between items-start">
+        <span class="text-[11px] uppercase font-bold text-amber-800 dark:text-amber-300">Alerta Por Vencer</span>
+        <span class="p-1 rounded bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        </span>
+      </div>
+      <div class="mt-2 flex items-baseline gap-2">
+        <span class="text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">{{ kpis().alerta_por_vencer_48h }}</span>
+        <span class="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">≤ 48h hábiles</span>
+      </div>
+      <div class="mt-2 text-[10px] text-amber-700 dark:text-amber-400 font-medium">
+        Urgente: cierre inminente
+      </div>
+    </div>
+
+    <!-- KPI 4: Plazo Vencido / Fenecido (Apto para Resolver) [Rojo] -->
+    <div (click)="setFiltro('VENCIDOS')" class="cursor-pointer transition-all hover:scale-[1.02] bg-surface-container-lowest dark:bg-inverse-surface p-3.5 rounded-xl border border-red-300 dark:border-red-800 shadow-sm relative overflow-hidden" [class.ring-2]="filtroActivo() === 'VENCIDOS'" [class.ring-red-500]="filtroActivo() === 'VENCIDOS'">
+      <div class="flex justify-between items-start">
+        <span class="text-[11px] uppercase font-bold text-red-800 dark:text-red-300">Plazo Fenecido</span>
+        <span class="p-1 rounded bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </span>
+      </div>
+      <div class="mt-2 flex items-baseline gap-2">
+        <span class="text-2xl font-bold font-mono text-red-600 dark:text-red-400">{{ kpis().plazo_vencido }}</span>
+        <span class="text-[11px] text-red-600 dark:text-red-400 font-semibold">Vencidos</span>
+      </div>
+      <div class="mt-2 text-[10px] text-red-700 dark:text-red-400 font-bold">
+        Apto para emitir Resolución
+      </div>
+    </div>
+
+    <!-- KPI 5: Notificadas por Ficción Legal (5 Días Hábiles sin apertura) [Púrpura] -->
+    <div (click)="setFiltro('FICCION_LEGAL')" class="cursor-pointer transition-all hover:scale-[1.02] bg-surface-container-lowest dark:bg-inverse-surface p-3.5 rounded-xl border border-purple-300 dark:border-purple-800 shadow-sm relative overflow-hidden" [class.ring-2]="filtroActivo() === 'FICCION_LEGAL'" [class.ring-purple-500]="filtroActivo() === 'FICCION_LEGAL'">
+      <div class="flex justify-between items-start">
+        <span class="text-[11px] uppercase font-bold text-purple-800 dark:text-purple-300">Ficción Legal (5d)</span>
+        <span class="p-1 rounded bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+        </span>
+      </div>
+      <div class="mt-2 flex items-baseline gap-2">
+        <span class="text-2xl font-bold font-mono text-purple-700 dark:text-purple-300">{{ kpis().notificadas_ficcion_legal }}</span>
+        <span class="text-[11px] text-purple-600 dark:text-purple-400 font-semibold">casos</span>
+      </div>
+      <div class="mt-2 text-[10px] text-purple-700 dark:text-purple-400 font-medium">
+        Art. 11 D.S. 001-2020-MTC
+      </div>
+    </div>
+  </section>
+
+  <!-- SECCIÓN 4: TABLA DE SEGUIMIENTO PROCESAL, SEMÁFOROS Y CÓMPUTO DE EFICACIA -->
+  <section class="bg-surface-container-lowest dark:bg-inverse-surface rounded-xl border border-outline-variant/80 dark:border-outline/60 shadow-sm overflow-hidden">
+    <!-- Barra de Herramientas y Filtros Rápidos -->
+    <div class="p-4 border-b border-outline-variant/60 dark:border-outline/40 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-surface-container-low/40 dark:bg-surface-container/20">
+      <div class="flex flex-wrap items-center gap-1.5">
+        <button (click)="setFiltro('TODOS')" [ngClass]="filtroActivo() === 'TODOS' ? 'bg-primary text-white' : 'bg-surface-container-lowest dark:bg-surface-container text-on-surface-variant dark:text-outline-variant border border-outline-variant dark:border-outline'" class="px-3 py-1 rounded text-xs font-semibold transition-colors">
+          Todos ({{ kpis().total_notificaciones }})
+        </button>
+        <button (click)="setFiltro('EN_PLAZO')" [ngClass]="filtroActivo() === 'EN_PLAZO' ? 'bg-emerald-700 text-white' : 'bg-surface-container-lowest dark:bg-surface-container text-on-surface-variant dark:text-outline-variant border border-outline-variant dark:border-outline'" class="px-3 py-1 rounded text-xs font-semibold transition-colors">
+          En Plazo ({{ kpis().en_plazo_ordinario }})
+        </button>
+        <button (click)="setFiltro('ALERTA_48H')" [ngClass]="filtroActivo() === 'ALERTA_48H' ? 'bg-amber-600 text-white' : 'bg-surface-container-lowest dark:bg-surface-container text-on-surface-variant dark:text-outline-variant border border-outline-variant dark:border-outline'" class="px-3 py-1 rounded text-xs font-semibold transition-colors">
+          Por Vencer ≤48h ({{ kpis().alerta_por_vencer_48h }})
+        </button>
+        <button (click)="setFiltro('VENCIDOS')" [ngClass]="filtroActivo() === 'VENCIDOS' ? 'bg-red-700 text-white' : 'bg-surface-container-lowest dark:bg-surface-container text-on-surface-variant dark:text-outline-variant border border-outline-variant dark:border-outline'" class="px-3 py-1 rounded text-xs font-semibold transition-colors">
+          Fenecidos ({{ kpis().plazo_vencido }})
+        </button>
+        <button (click)="setFiltro('FICCION_LEGAL')" [ngClass]="filtroActivo() === 'FICCION_LEGAL' ? 'bg-purple-700 text-white' : 'bg-surface-container-lowest dark:bg-surface-container text-on-surface-variant dark:text-outline-variant border border-outline-variant dark:border-outline'" class="px-3 py-1 rounded text-xs font-semibold transition-colors">
+          Ficción Legal ({{ kpis().notificadas_ficcion_legal }})
+        </button>
+      </div>
+
+      <div class="relative w-full md:w-72">
+        <input 
+          [(ngModel)]="busquedaTexto"
+          placeholder="Buscar por expediente, acto o casilla..."
+          class="w-full h-8 px-3 pr-8 text-xs bg-white dark:bg-inverse-surface border border-outline-variant dark:border-outline rounded text-on-surface dark:text-inverse-on-surface focus:outline-none focus:border-primary font-mono"
+          type="text"
+        />
+        <svg class="w-4 h-4 absolute right-2.5 top-2 text-on-surface-variant dark:text-outline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Tabla Responsiva -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead class="bg-surface-container dark:bg-surface-container-high/60 text-on-surface-variant dark:text-outline-variant uppercase font-bold text-[11px] border-b border-outline-variant/60 dark:border-outline/40">
+          <tr>
+            <th class="py-3 px-4">Expediente & Acto Administrativo</th>
+            <th class="py-3 px-4">Destinatario / Casilla MTC</th>
+            <th class="py-3 px-4">Depósito en Casilla</th>
+            <th class="py-3 px-4">Eficacia Jurídica</th>
+            <th class="py-3 px-4">Cómputo & Avance de Plazo</th>
+            <th class="py-3 px-4 text-center">Estado Procesal</th>
+            <th class="py-3 px-4 text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-outline-variant/40 dark:divide-outline/30">
+          <tr *ngFor="let notif of notificacionesFiltradas()" class="hover:bg-surface-container-low/60 dark:hover:bg-surface-container/30 transition-colors">
+            <!-- Columna 1: Expediente & Acto -->
+            <td class="py-3 px-4">
+              <div class="font-mono font-bold text-primary dark:text-inverse-primary">
+                {{ notif.codigo_expediente }}
+              </div>
+              <div class="text-[11px] text-on-surface-variant dark:text-outline-variant font-medium">
+                {{ notif.numero_acto_administrativo }}
+              </div>
+              <span class="inline-block mt-0.5 text-[10px] font-semibold text-gray-500 dark:text-gray-400">
+                {{ notif.tipo_procedimiento || 'Procedimiento Administrativo Sancionador' }}
+              </span>
+            </td>
+
+            <!-- Columna 2: Destinatario / Casilla MTC -->
+            <td class="py-3 px-4">
+              <div class="font-semibold text-on-surface dark:text-inverse-on-surface max-w-xs truncate" [title]="notif.asunto">
+                {{ notif.asunto }}
+              </div>
+              <div class="flex items-center gap-1.5 mt-0.5 text-[11px] font-mono text-on-surface-variant dark:text-outline-variant">
+                <span class="px-1.5 py-0.2 rounded bg-surface-container dark:bg-surface-container-high">
+                  {{ notif.casilla?.codigo_casilla || 'CAS-MTC' }}
+                </span>
+              </div>
+            </td>
+
+            <!-- Columna 3: Depósito en Casilla -->
+            <td class="py-3 px-4 font-mono text-[11px]">
+              <div *ngIf="notif.fecha_deposito">
+                {{ notif.fecha_deposito | date:'dd/MM/yyyy' }}
+                <div class="text-[10px] text-gray-400">{{ notif.fecha_deposito | date:'HH:mm:ss' }} UTC-5</div>
+              </div>
+              <div *ngIf="!notif.fecha_deposito" class="text-amber-600 dark:text-amber-400 font-sans italic">
+                Pendiente de depósito
+              </div>
+            </td>
+
+            <!-- Columna 4: Eficacia Jurídica (Lectura vs Ficción Legal) -->
+            <td class="py-3 px-4">
+              <!-- Lectura voluntaria -->
+              <div *ngIf="notif.origen_notificacion_efectiva === 'LECTURA_VOLUNTARIA'" class="space-y-0.5">
+                <span class="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded">
+                  <svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                  Lectura Voluntaria
+                </span>
+                <div class="text-[10px] font-mono text-on-surface-variant dark:text-outline-variant">
+                  Efecto: {{ notif.fecha_notificacion_efectiva | date:'dd/MM/yyyy HH:mm' }}
+                </div>
+              </div>
+
+              <!-- Ficción legal automática -->
+              <div *ngIf="notif.origen_notificacion_efectiva === 'FICCION_LEGAL_5_DIAS' || notif.origen_notificacion_efectiva === 'FICCION_LEGAL_CONSUMADA'" class="space-y-0.5">
+                <span class="inline-flex items-center gap-1 bg-purple-50 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-700 text-[10px] font-bold px-2 py-0.5 rounded">
+                  <svg class="w-3 h-3 text-purple-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd"></path></svg>
+                  Ficción Legal (5d)
+                </span>
+                <div class="text-[10px] font-mono text-purple-700 dark:text-purple-400 font-semibold">
+                  Efecto legal al 5° día hábil
+                </div>
+              </div>
+
+              <!-- En gracia de lectura -->
+              <div *ngIf="!notif.origen_notificacion_efectiva || notif.origen_notificacion_efectiva === 'PENDIENTE_LECTURA'" class="space-y-0.5">
+                <span class="inline-flex items-center gap-1 bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700 text-[10px] font-bold px-2 py-0.5 rounded">
+                  En Gracia (Apertura)
+                </span>
+                <div class="text-[10px] font-mono text-gray-500">
+                  Vence gracia: {{ notif.fecha_limite_gracia_5dias | date:'dd/MM/yyyy' }}
+                </div>
+              </div>
+            </td>
+
+            <!-- Columna 5: Cómputo & Avance de Plazo -->
+            <td class="py-3 px-4">
+              <div *ngIf="notif.fecha_vencimiento_plazo">
+                <div class="flex items-center justify-between text-[11px] font-mono mb-1">
+                  <span>Plazo: <strong>{{ notif.plazo_dias_habiles }}d hábiles</strong></span>
+                  <span class="font-bold" [ngClass]="notif.dias_habiles_restantes! < 0 ? 'text-red-600' : (notif.dias_habiles_restantes! <= 2 ? 'text-amber-600' : 'text-emerald-600')">
+                    {{ notif.dias_habiles_restantes! < 0 ? 'Vencido hace ' + (-notif.dias_habiles_restantes!) + 'd' : notif.dias_habiles_restantes + 'd restantes' }}
+                  </span>
+                </div>
+
+                <!-- Barra de Progreso de Plazo Legal -->
+                <div class="w-full bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden">
+                  <div 
+                    class="h-full rounded-full transition-all"
+                    [ngClass]="notif.dias_habiles_restantes! < 0 ? 'bg-red-600' : (notif.dias_habiles_restantes! <= 2 ? 'bg-amber-500' : 'bg-emerald-500')"
+                    [style.width.%]="notif.porcentaje_transcurrido || 10"
+                  ></div>
+                </div>
+
+                <div class="text-[10px] text-gray-400 mt-1 font-mono">
+                  Límite: {{ notif.fecha_vencimiento_plazo | date:'dd/MM/yyyy' }}
+                </div>
+              </div>
+
+              <div *ngIf="!notif.fecha_vencimiento_plazo" class="text-[11px] text-gray-400 italic">
+                Cómputo inicia tras lectura o vencimiento de 5d hábiles
+              </div>
+            </td>
+
+            <!-- Columna 6: Semáforo Procesal -->
+            <td class="py-3 px-4 text-center">
+              <span *ngIf="notif.estado_plazo === 'EN_PLAZO'" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                EN PLAZO
+              </span>
+
+              <span *ngIf="notif.estado_plazo === 'POR_VENCER_48H' || notif.estado_plazo === 'VENCE_HOY'" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 animate-pulse">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                POR VENCER
+              </span>
+
+              <span *ngIf="notif.estado_plazo === 'PLAZO_FENECIDO'" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300 border border-red-300 dark:border-red-700">
+                <span class="w-2 h-2 rounded-full bg-red-600"></span>
+                VENCIDO
+              </span>
+
+              <span *ngIf="notif.estado_plazo === 'EN_GRACIA_LECTURA'" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700">
+                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                EN GRACIA (5d)
+              </span>
+
+              <span *ngIf="notif.estado_plazo === 'PENDIENTE_DEPOSITO'" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
+                BORRADOR
+              </span>
+            </td>
+
+            <!-- Columna 7: Acciones -->
+            <td class="py-3 px-4 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <button (click)="abrirModalComputo(notif)" class="p-1 rounded text-primary dark:text-inverse-primary hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors" title="Ver Hoja de Cómputo Legal y Plazos">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                </button>
+
+                <button *ngIf="notif.estado === 'DEPOSITADO'" (click)="sincronizarConstancia(notif)" class="p-1 rounded text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950 transition-colors" title="Consultar si ya fue leído en MTC">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                </button>
+
+                <a *ngIf="notif.documentos.length > 0 && notif.documentos[0].download_url" [href]="notif.documentos[0].download_url" target="_blank" class="p-1 rounded text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors" title="Descargar Acto Administrativo">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                </a>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="notificacionesFiltradas().length === 0">
+            <td colspan="7" class="py-8 text-center text-on-surface-variant dark:text-outline">
+              No se encontraron notificaciones que coincidan con el filtro seleccionado.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- SECCIÓN 5: MARCO NORMATIVO VINCULANTE (PANEL DIDÁCTICO GOVTECH) -->
+  <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="bg-surface-container-lowest dark:bg-inverse-surface p-4 rounded-xl border border-outline-variant/60 dark:border-outline/40 space-y-2 shadow-sm">
+      <div class="flex items-center gap-2 text-primary dark:text-inverse-primary font-bold text-xs uppercase">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+        Regla de Días Hábiles (Ley 27444 Art. 143/145)
+      </div>
+      <p class="text-xs text-on-surface-variant dark:text-outline-variant leading-relaxed">
+        El plazo expresado en días es contado a partir del <strong>día hábil siguiente</strong> de aquel en que se practique la notificación. Se excluyen sábados, domingos y feriados nacionales/regionales de Puno.
+      </p>
+    </div>
+
+    <div class="bg-surface-container-lowest dark:bg-inverse-surface p-4 rounded-xl border border-outline-variant/60 dark:border-outline/40 space-y-2 shadow-sm">
+      <div class="flex items-center gap-2 text-purple-700 dark:text-purple-400 font-bold text-xs uppercase">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        Ficción Legal de Notificación (D.S. 001-2020-MTC)
+      </div>
+      <p class="text-xs text-on-surface-variant dark:text-outline-variant leading-relaxed">
+        Si transcurren <strong>cinco (5) días hábiles</strong> desde el depósito en casilla sin apertura del administrado, surte efectos legales el 5° día hábil a las 23:59:59. El plazo del acto inicia indefectiblemente al 6° día hábil.
+      </p>
+    </div>
+
+    <div class="bg-surface-container-lowest dark:bg-inverse-surface p-4 rounded-xl border border-outline-variant/60 dark:border-outline/40 space-y-2 shadow-sm">
+      <div class="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold text-xs uppercase">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+        Garantía de No Alteración (SHA-256)
+      </div>
+      <p class="text-xs text-on-surface-variant dark:text-outline-variant leading-relaxed">
+        Todos los actos administrativos, constancias CAD y CAL cuentan con huella digital SHA-256 y sellos de tiempo oficiales que otorgan valor probatorio ante el Poder Judicial y OCI.
+      </p>
+    </div>
+  </section>
+
+  <!-- MODAL: HOJA DE CÓMPUTO LEGAL Y DETALLE DE NOTIFICACIÓN -->
+  <div *ngIf="expedienteSeleccionado() as exp" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-surface-container-lowest dark:bg-inverse-surface rounded-2xl border border-outline-variant dark:border-outline max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-outline-variant/60 dark:border-outline/40 pb-3">
+        <div>
+          <h3 class="text-base font-bold text-on-surface dark:text-inverse-on-surface">
+            Hoja de Cómputo de Plazos Administrativos
+          </h3>
+          <span class="text-xs font-mono text-primary dark:text-inverse-primary">{{ exp.codigo_expediente }} - {{ exp.numero_acto_administrativo }}</span>
+        </div>
+        <button (click)="cerrarModalComputo()" class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div class="grid grid-cols-2 gap-3 bg-surface-container-low dark:bg-surface-container/40 p-3 rounded-lg border border-outline-variant/60 dark:border-outline/40">
+          <div>
+            <span class="text-gray-500 font-semibold block">Asunto:</span>
+            <span class="text-on-surface dark:text-inverse-on-surface font-medium">{{ exp.asunto }}</span>
+          </div>
+          <div>
+            <span class="text-gray-500 font-semibold block">Casilla MTC:</span>
+            <span class="font-mono text-on-surface dark:text-inverse-on-surface">{{ exp.casilla?.codigo_casilla || 'N/A' }}</span>
+          </div>
+        </div>
+
+        <h4 class="font-bold text-xs uppercase text-primary dark:text-inverse-primary pt-2">Línea de Tiempo Procesal (Art. 11 DS 001-2020-MTC):</h4>
+        
+        <div class="space-y-2 border-l-2 border-primary/40 pl-3">
+          <div class="relative">
+            <span class="w-2 h-2 rounded-full bg-primary absolute -left-[17px] top-1"></span>
+            <div class="font-bold">1. Depósito Oficial en Casilla MTC:</div>
+            <div class="font-mono text-gray-500">{{ exp.fecha_deposito ? (exp.fecha_deposito | date:'dd/MM/yyyy HH:mm:ss') : 'No depositado' }}</div>
+          </div>
+
+          <div class="relative">
+            <span class="w-2 h-2 rounded-full bg-blue-500 absolute -left-[17px] top-1"></span>
+            <div class="font-bold">2. Periodo de Gracia para Apertura (5 Días Hábiles):</div>
+            <div class="text-gray-500">Límite para apertura voluntaria: <strong class="font-mono text-on-surface dark:text-inverse-on-surface">{{ exp.fecha_limite_gracia_5dias | date:'dd/MM/yyyy 23:59:59' }}</strong></div>
+          </div>
+
+          <div class="relative">
+            <span class="w-2 h-2 rounded-full absolute -left-[17px] top-1" [ngClass]="exp.origen_notificacion_efectiva === 'LECTURA_VOLUNTARIA' ? 'bg-emerald-500' : 'bg-purple-600'"></span>
+            <div class="font-bold">3. Configuración de Eficacia Notificable:</div>
+            <div class="text-gray-500">
+              Modalidad: <strong>{{ exp.origen_notificacion_efectiva || 'Pendiente' }}</strong>
+              <span *ngIf="exp.fecha_notificacion_efectiva"> (Fecha efectiva: {{ exp.fecha_notificacion_efectiva | date:'dd/MM/yyyy HH:mm' }})</span>
+            </div>
+          </div>
+
+          <div class="relative">
+            <span class="w-2 h-2 rounded-full bg-amber-500 absolute -left-[17px] top-1"></span>
+            <div class="font-bold">4. Inicio del Cómputo del Plazo Administrativo:</div>
+            <div class="text-gray-500">Día hábil siguiente a la notificación efectiva: <strong class="font-mono text-on-surface dark:text-inverse-on-surface">{{ exp.fecha_inicio_computo ? (exp.fecha_inicio_computo | date:'dd/MM/yyyy') : 'Pendiente' }}</strong></div>
+          </div>
+
+          <div class="relative">
+            <span class="w-2 h-2 rounded-full absolute -left-[17px] top-1" [ngClass]="exp.dias_habiles_restantes! < 0 ? 'bg-red-600' : 'bg-emerald-600'"></span>
+            <div class="font-bold">5. Vencimiento Improrrogable del Plazo:</div>
+            <div class="text-gray-500">Fecha límite ({{ exp.plazo_dias_habiles }}d hábiles): <strong class="font-mono text-on-surface dark:text-inverse-on-surface">{{ exp.fecha_vencimiento_plazo ? (exp.fecha_vencimiento_plazo | date:'dd/MM/yyyy') : 'Pendiente' }}</strong></div>
+            <div class="mt-1 font-bold" [ngClass]="exp.dias_habiles_restantes! < 0 ? 'text-red-600' : 'text-emerald-600'">
+              {{ exp.dias_habiles_restantes! < 0 ? 'Plazo fenecido hace ' + (-exp.dias_habiles_restantes!) + ' días hábiles. Procedimiento expedito para resolver.' : 'Quedan ' + exp.dias_habiles_restantes + ' días hábiles.' }}
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="exp.acuses.length > 0" class="pt-2">
+          <h4 class="font-bold text-xs uppercase text-gray-500 mb-1">Constancias Oficiales MTC Asociadas:</h4>
+          <div class="space-y-1">
+            <div *ngFor="let ac of exp.acuses" class="flex items-center justify-between p-2 rounded bg-surface-container-low dark:bg-surface-container/30 border border-outline-variant/60 font-mono text-[11px]">
+              <div>
+                <span class="font-bold text-primary dark:text-inverse-primary">{{ ac.tipo_acuse }}:</span> {{ ac.codigo_verificacion_mtc }}
+              </div>
+              <a *ngIf="ac.download_url" [href]="ac.download_url" target="_blank" class="text-blue-600 underline text-xs">Descargar Acuse PDF</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-3 border-t border-outline-variant/60 dark:border-outline/40">
+        <button (click)="cerrarModalComputo()" class="px-4 py-2 bg-surface-container dark:bg-surface-container-high rounded-lg text-xs font-semibold hover:bg-surface-container-high transition-colors text-on-surface dark:text-inverse-on-surface">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

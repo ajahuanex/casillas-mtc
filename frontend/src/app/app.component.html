@@ -1,32 +1,155 @@
-<div class="min-h-screen flex flex-col bg-slate-50 font-sans">
-  <!-- Barra Superior Institucional -->
-  <header class="bg-drtc-700 text-white shadow-md">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
-      <div class="flex items-center gap-3">
-        <span class="text-2xl">🏛️</span>
-        <div>
-          <h1 class="text-lg font-bold tracking-tight">Sistema de Notificaciones Electrónicas</h1>
-          <p class="text-xs text-drtc-100">DRTC Puno / Integración Casilla Electrónica MTC</p>
+<div class="min-h-screen flex flex-col bg-slate-50 dark:bg-inverse-surface font-sans text-slate-800 dark:text-inverse-on-surface transition-colors duration-200">
+  <!-- Cinta Soberana Nacional (Rojo - Blanco - Rojo) -->
+  <div class="w-full h-1.5 flex flex-row">
+    <div class="w-1/3 h-full bg-[#dc2626]"></div>
+    <div class="w-1/3 h-full bg-white"></div>
+    <div class="w-1/3 h-full bg-[#dc2626]"></div>
+  </div>
+
+  <!-- Barra Superior Institucional con Logos Oficiales -->
+  <header class="w-full px-4 sm:px-6 lg:px-8 bg-white dark:bg-inverse-surface border-b border-slate-200 dark:border-outline sticky top-0 z-50 shadow-sm">
+    <div class="max-w-[1920px] mx-auto flex flex-col md:flex-row justify-between items-center py-2.5 gap-3">
+      <!-- Bloque de Identidad Institucional & Logos -->
+      <div class="flex items-center gap-3 sm:gap-4 flex-wrap">
+        <!-- Escudo Región Puno -->
+        <img src="/assets/logos/escudo-region-puno.png" alt="Escudo Región Puno" 
+             class="h-10 w-auto object-contain drop-shadow-sm" title="Gobierno Regional Puno">
+        
+        <!-- Sello Ovalado Dirección de Circulación Terrestre Puno -->
+        <img src="/assets/logos/sello-circulacion-terrestre-puno.png" alt="Dirección de Circulación Terrestre Puno" 
+             class="h-11 w-auto object-contain" title="Dirección de Circulación Terrestre - DRTC Puno">
+
+        <!-- Divisor vertical -->
+        <div class="hidden sm:block h-8 w-px bg-slate-300"></div>
+
+        <!-- Banner MTC Perú -->
+        <img src="/assets/logos/logo-mtc-peru.jpg" alt="Ministerio de Transportes y Comunicaciones - Perú" 
+             class="h-8 w-auto object-contain rounded-sm" title="Ministerio de Transportes y Comunicaciones">
+
+        <!-- Logo DRTC Puno -->
+        <img src="/assets/logos/logo-drtc-puno.png" alt="DRTC Puno" 
+             class="h-7 w-auto object-contain hidden lg:block" title="DRTC Puno">
+
+        <div class="hidden xl:block pl-2 border-l border-slate-200">
+          <div class="text-sm font-bold text-slate-900 leading-tight">
+            Sede Electrónica de Notificaciones
+          </div>
+          <div class="text-[11px] text-slate-500 font-medium">
+            Dirección de Circulación Terrestre / Casilla MTC
+          </div>
         </div>
       </div>
-      <nav class="flex items-center gap-3">
-        <a routerLink="/" class="text-xs font-semibold text-white/90 hover:text-white px-3 py-1.5 rounded-md hover:bg-drtc-900 transition-colors">
-          📋 Bandeja General
-        </a>
-        <a routerLink="/nueva" class="btn btn-sm btn-accent text-xs">
-          ➕ Emitir Notificación
-        </a>
-      </nav>
+
+      <!-- Navegación & Telemetría en Vivo -->
+      <div class="flex items-center gap-3 sm:gap-4 flex-wrap justify-end">
+        <!-- Telemetría de Conexión & Reloj -->
+        <div class="hidden lg:flex items-center gap-2 text-xs bg-slate-100 text-slate-700 px-3 py-1.5 rounded border border-slate-200 font-mono-code">
+          <span class="flex items-center gap-1.5 font-semibold text-emerald-700">
+            <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+            Nodo DRTC-01
+          </span>
+          <span class="text-slate-300">|</span>
+          <span class="flex items-center gap-1 text-slate-600">
+            <span class="material-symbols-outlined text-[15px] text-blue-800">verified_user</span>
+            TLS 1.3 mTLS
+          </span>
+          <span class="text-slate-300">|</span>
+          <span class="flex items-center gap-1 text-slate-700 font-medium">
+            <span class="material-symbols-outlined text-[15px] text-slate-500">schedule</span>
+            {{ horaActual() }}
+          </span>
+        </div>
+
+        <!-- Botones de Navegación -->
+        <nav class="flex items-center gap-2">
+          <a routerLink="/dashboard" routerLinkActive="bg-primary text-white shadow-sm" [routerLinkActiveOptions]="{exact: true}"
+             class="text-xs font-semibold px-3 py-1.5 rounded-lg text-on-surface dark:text-inverse-on-surface hover:bg-surface-container-low dark:hover:bg-surface-container transition-colors flex items-center gap-1.5 border border-outline-variant/60 dark:border-outline/40">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+            <span>Dashboard Alertas</span>
+          </a>
+          <a routerLink="/custodia" routerLinkActive="bg-primary text-white shadow-sm"
+             class="text-xs font-semibold px-3 py-1.5 rounded-lg text-on-surface dark:text-inverse-on-surface hover:bg-surface-container-low dark:hover:bg-surface-container transition-colors flex items-center gap-1.5 border border-outline-variant/60 dark:border-outline/40">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>
+            <span>Bóveda MinIO S3</span>
+          </a>
+          <a routerLink="/bandeja" routerLinkActive="bg-primary text-white shadow-sm"
+             class="text-xs font-semibold px-3 py-1.5 rounded-lg text-on-surface dark:text-inverse-on-surface hover:bg-surface-container-low dark:hover:bg-surface-container transition-colors flex items-center gap-1.5 border border-outline-variant/60 dark:border-outline/40">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+            <span>Bandeja General</span>
+          </a>
+
+          <a routerLink="/nueva" routerLinkActive="bg-blue-800 text-white shadow-sm"
+             class="text-xs font-semibold px-3 py-1.5 rounded-lg text-white bg-primary hover:bg-primary-container transition-colors flex items-center gap-1.5 shadow-sm">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            <span>Nueva Emisión</span>
+          </a>
+        </nav>
+
+        <!-- Switch de Modo Claro / Modo Oscuro GovTech -->
+        <button (click)="themeService.toggleTheme()" 
+                class="p-1.5 rounded-lg border border-outline-variant dark:border-outline text-on-surface dark:text-inverse-on-surface hover:bg-surface-container-low dark:hover:bg-surface-container transition-colors flex items-center justify-center"
+                title="Alternar Modo Claro / Modo Oscuro GovTech">
+          <svg *ngIf="themeService.currentTheme() === 'light'" class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+          </svg>
+          <svg *ngIf="themeService.currentTheme() === 'dark'" class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+          </svg>
+        </button>
+
+        <!-- Operador Pill -->
+        <div class="hidden md:flex items-center gap-2 pl-2 border-l border-outline-variant dark:border-outline">
+          <div class="text-right">
+            <div class="text-xs font-bold text-on-surface dark:text-inverse-on-surface">Ing. V. Mamani Quispe</div>
+            <div class="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold flex items-center justify-end gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+              Operador MTC
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </header>
 
-  <!-- Contenido Central -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+  <!-- Banner de Interoperabilidad Legal MTC -->
+  <div class="bg-slate-100 border-b border-slate-200 px-4 sm:px-6 lg:px-8 py-1.5 text-xs text-slate-600">
+    <div class="max-w-[1920px] mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
+      <div class="flex items-center gap-1.5">
+        <span class="material-symbols-outlined text-blue-900 text-[16px]">verified</span>
+        <span>Interoperabilidad oficial con <code class="font-mono-code font-semibold text-slate-800">dvwscasilla.mtc.gob.pe</code> según <strong>D.S. N° 001-2020-MTC</strong> y <strong>Ley N° 27444</strong>.</span>
+      </div>
+      <div class="flex items-center gap-3 text-[11px] text-slate-500 font-mono-code">
+        <span>Token Bearer OAuth2 Activo</span>
+        <span>•</span>
+        <span>Custodia MinIO S3 SHA-256</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenido Central Principal -->
+  <main class="flex-1 w-full max-w-[1920px] mx-auto p-4 sm:p-6 lg:p-8">
     <router-outlet></router-outlet>
   </main>
 
-  <!-- Pie de Página -->
-  <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
-    <p>Sistema Oficial de Casillas Electrónicas | Custodia Legal MinIO S3 & PostgreSQL | Asistencia Gemini AI</p>
+  <!-- Pie de Página Institucional Oficial -->
+  <footer class="bg-white dark:bg-inverse-surface border-t border-slate-200 dark:border-outline py-6 px-4 sm:px-6 lg:px-8 mt-12 text-xs text-slate-600 dark:text-outline-variant">
+    <div class="max-w-[1920px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="flex items-center gap-3 text-center md:text-left">
+        <img src="/assets/logos/sello-circulacion-terrestre-puno.png" alt="DRTC Puno" class="h-8 w-auto object-contain opacity-80">
+        <div>
+          <p class="font-semibold text-slate-800 dark:text-inverse-on-surface">Gobierno Regional Puno - Dirección Regional de Transportes y Comunicaciones (DRTC)</p>
+          <p class="text-[11px] text-slate-500 dark:text-outline-variant">Dirección de Circulación Terrestre | Sistema de Notificaciones en Casilla Electrónica MTC</p>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center justify-center gap-4 text-slate-500 text-[11px]">
+        <span>Validez Legal: Ley N° 27444 Art. 20.1</span>
+        <span>•</span>
+        <span>D.S. N° 001-2020-MTC</span>
+        <span>•</span>
+        <span>Custodia Inmutable SHA-256</span>
+        <span>•</span>
+        <a href="https://www.gob.pe/mtc" target="_blank" class="text-blue-800 hover:underline font-semibold">Portal Gob.pe</a>
+      </div>
+    </div>
   </footer>
 </div>

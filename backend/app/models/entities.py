@@ -68,11 +68,21 @@ class Notificacion(Base, TimestampMixin):
         nullable=False
     )
 
-    # Fechas críticas de control de plazos
+    # Fechas críticas de control de plazos y cómputo legal (Ley 27444 y DS 001-2020-MTC)
     fecha_emision: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
     fecha_firma: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     fecha_deposito: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    fecha_lectura: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     fecha_notificacion_efectiva: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    fecha_limite_gracia_5dias: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    fecha_inicio_computo: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    fecha_vencimiento_plazo: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # Parámetros procesales
+    plazo_dias_habiles: Mapped[int] = mapped_column(Integer, default=15, nullable=False)
+    tipo_procedimiento: Mapped[Optional[str]] = mapped_column(String(100), default="Procedimiento Administrativo Sancionador", nullable=True)
+    origen_notificacion_efectiva: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    estado_plazo: Mapped[Optional[str]] = mapped_column(String(50), default="PENDIENTE_DEPOSITO", nullable=True)
 
     # Identificadores y payloads devueltos por el MTC
     id_transaccion_mtc: Mapped[Optional[str]] = mapped_column(String(100), index=True, nullable=True)

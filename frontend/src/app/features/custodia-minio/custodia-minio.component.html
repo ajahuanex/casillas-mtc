@@ -1,0 +1,441 @@
+<div class="space-y-6">
+  <!-- Toast Notification -->
+  <div *ngIf="toastMensaje()" class="fixed bottom-6 right-6 z-50 bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 border border-slate-700 dark:border-slate-300 animate-bounce">
+    <span class="material-symbols-outlined text-green-400 dark:text-green-600">verified</span>
+    <span class="text-sm font-medium">{{ toastMensaje() }}</span>
+  </div>
+
+  <!-- Header de Control y Estado MinIO S3 -->
+  <div class="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 transition-colors">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="inline-flex items-center justify-center w-6 h-6 rounded bg-red-600 text-white font-bold text-xs">PE</span>
+          <span class="text-xs font-semibold tracking-wider text-blue-900 dark:text-blue-400 uppercase">
+            Gobierno Regional Puno | DRTC Puno
+          </span>
+        </div>
+        <h1 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-3xl">cloud_done</span>
+          Bóveda Digital & Custodia Criptográfica MinIO S3
+        </h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Almacenamiento Inmutable de Cédulas, Constancias CAD/CAL y Actos Administrativos (D.S. N° 001-2020-MTC / Ley N° 27269 / T.U.O. Ley N° 27444)
+        </p>
+      </div>
+
+      <!-- Acciones de Cabecera -->
+      <div class="flex flex-wrap items-center gap-2">
+        <button 
+          (click)="cargarDatosMinio()" 
+          [disabled]="loading()"
+          class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm disabled:opacity-50">
+          <span class="material-symbols-outlined text-sm" [class.animate-spin]="loading()">sync</span>
+          Refrescar Bóveda
+        </button>
+
+        <button 
+          (click)="verificarYPoblarBoveda()" 
+          [disabled]="loading()"
+          class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg border border-blue-300 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors shadow-sm disabled:opacity-50">
+          <span class="material-symbols-outlined text-sm">inventory_2</span>
+          Regenerar Constancias Criptográficas
+        </button>
+
+        <button 
+          (click)="modalSubidaAbierto.set(true)"
+          class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg bg-blue-700 hover:bg-blue-800 text-white transition-colors shadow-sm">
+          <span class="material-symbols-outlined text-sm">cloud_upload</span>
+          Subir Acto / Anexo a MinIO
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Telemetry Status Banner -->
+    <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div class="flex items-center gap-2">
+        <span class="relative flex h-2.5 w-2.5">
+          <span *ngIf="estadoMinio()?.status === 'en_linea'" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5" [ngClass]="estadoMinio()?.status === 'en_linea' ? 'bg-emerald-500' : 'bg-red-500'"></span>
+        </span>
+        <span class="font-semibold text-slate-800 dark:text-slate-200">
+          MinIO S3: {{ estadoMinio()?.status === 'en_linea' ? 'EN LÍNEA' : 'DESCONECTADO' }}
+        </span>
+        <span class="text-slate-400 dark:text-slate-600">|</span>
+        <span class="text-slate-600 dark:text-slate-400">Endpoint: <code class="font-mono text-xs">{{ estadoMinio()?.endpoint || 'minio:9000' }}</code></span>
+        <span class="text-slate-400 dark:text-slate-600">|</span>
+        <span class="text-slate-600 dark:text-slate-400">Bucket: <code class="font-mono text-xs font-semibold text-blue-600 dark:text-blue-400">/{{ estadoMinio()?.bucket || 'casillas-notificaciones' }}</code></span>
+        <span class="text-slate-400 dark:text-slate-600">|</span>
+        <span class="text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded font-mono text-[11px] font-semibold">
+          Inmutabilidad WORM Activa
+        </span>
+      </div>
+
+      <div class="text-slate-500 dark:text-slate-400 font-mono text-[11px]">
+        Objetos Custodiados: <strong class="text-slate-800 dark:text-slate-200">{{ estadoMinio()?.total_objects || 0 }}</strong> | Espacio: <strong class="text-slate-800 dark:text-slate-200">{{ estadoMinio()?.total_mb || 0 }} MB</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tarjetas de Métricas Criptográficas -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- KPI 1: Actos Custodiados -->
+    <div class="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+      <div class="absolute top-0 left-0 right-0 h-1 bg-blue-600"></div>
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Actos Custodiados</span>
+        <span class="material-symbols-outlined text-blue-600 dark:text-blue-400">lock</span>
+      </div>
+      <div class="mt-2 text-3xl font-bold text-slate-900 dark:text-white font-mono">
+        {{ totalResoluciones() }}
+      </div>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+        Resoluciones Directorales con validez legal
+      </p>
+    </div>
+
+    <!-- KPI 2: Constancias CAD -->
+    <div class="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+      <div class="absolute top-0 left-0 right-0 h-1 bg-amber-500"></div>
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Constancias CAD</span>
+        <span class="material-symbols-outlined text-amber-500">mark_email_read</span>
+      </div>
+      <div class="mt-2 text-3xl font-bold text-slate-900 dark:text-white font-mono">
+        {{ totalCAD() }}
+      </div>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+        Acuses de Depósito Telemático (Art. 11 MTC)
+      </p>
+    </div>
+
+    <!-- KPI 3: Constancias CAL -->
+    <div class="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+      <div class="absolute top-0 left-0 right-0 h-1 bg-emerald-600"></div>
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Constancias CAL</span>
+        <span class="material-symbols-outlined text-emerald-600">task_alt</span>
+      </div>
+      <div class="mt-2 text-3xl font-bold text-slate-900 dark:text-white font-mono">
+        {{ totalCAL() }}
+      </div>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+        Lecturas efectivas & Ficción legal 5 días
+      </p>
+    </div>
+
+    <!-- KPI 4: Integridad Criptográfica -->
+    <div class="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+      <div class="absolute top-0 left-0 right-0 h-1 bg-indigo-600"></div>
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Integridad Criptográfica</span>
+        <span class="material-symbols-outlined text-indigo-600">verified_user</span>
+      </div>
+      <div class="mt-2 text-3xl font-bold text-slate-900 dark:text-white font-mono">
+        100%
+      </div>
+      <p class="text-xs text-emerald-600 dark:text-emerald-400 mt-1 font-semibold flex items-center gap-1">
+        <span class="material-symbols-outlined text-xs">check_circle</span>
+        Hashes SHA-256 Validados en S3
+      </p>
+    </div>
+  </div>
+
+  <!-- Explorador de Objetos S3 -->
+  <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
+    <!-- Barra de Filtros y Búsqueda -->
+    <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <!-- Pestañas de Tipo -->
+      <div class="flex flex-wrap items-center gap-1">
+        <button 
+          (click)="filtroTipo.set('TODOS')"
+          [ngClass]="filtroTipo() === 'TODOS' ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'"
+          class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+          Todos ({{ totalObjetos() }})
+        </button>
+        <button 
+          (click)="filtroTipo.set('Resolución Directoral')"
+          [ngClass]="filtroTipo() === 'Resolución Directoral' ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'"
+          class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+          Resoluciones ({{ totalResoluciones() }})
+        </button>
+        <button 
+          (click)="filtroTipo.set('Constancia CAD')"
+          [ngClass]="filtroTipo() === 'Constancia CAD' ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'"
+          class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+          Acuses CAD ({{ totalCAD() }})
+        </button>
+        <button 
+          (click)="filtroTipo.set('Constancia CAL')"
+          [ngClass]="filtroTipo() === 'Constancia CAL' ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'"
+          class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+          Acuses CAL ({{ totalCAL() }})
+        </button>
+      </div>
+
+      <!-- Buscador -->
+      <div class="relative w-full md:w-80">
+        <span class="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-sm">search</span>
+        <input 
+          type="text" 
+          [ngModel]="busqueda()" 
+          (ngModelChange)="busqueda.set($event)"
+          placeholder="Buscar por nombre, tipo o hash ETag..." 
+          class="w-full pl-9 pr-4 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400">
+      </div>
+    </div>
+
+    <!-- Tabla de Objetos Custodiados -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 uppercase font-semibold border-b border-slate-200 dark:border-slate-800">
+          <tr>
+            <th class="px-4 py-3">Objeto / Ruta MinIO</th>
+            <th class="px-4 py-3">Tipo de Documento</th>
+            <th class="px-4 py-3">Tamaño</th>
+            <th class="px-4 py-3">Sello TSA / Modificación</th>
+            <th class="px-4 py-3">ETag MinIO S3</th>
+            <th class="px-4 py-3 text-right">Acciones Criptográficas</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+          <tr *ngFor="let obj of objetosFiltrados()" class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+            <!-- Ruta -->
+            <td class="px-4 py-3 font-mono font-medium max-w-xs truncate" [title]="obj.name">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-red-500 text-lg">picture_as_pdf</span>
+                <span class="truncate">{{ obj.name }}</span>
+              </div>
+            </td>
+
+            <!-- Tipo Badge -->
+            <td class="px-4 py-3">
+              <span *ngIf="obj.tipo === 'Resolución Directoral'" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 dark:bg-blue-950/70 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                <span class="material-symbols-outlined text-[12px]">gavel</span>
+                Resolución
+              </span>
+              <span *ngIf="obj.tipo === 'Constancia CAD'" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                <span class="material-symbols-outlined text-[12px]">forward_to_inbox</span>
+                Acuse CAD
+              </span>
+              <span *ngIf="obj.tipo === 'Constancia CAL'" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                <span class="material-symbols-outlined text-[12px]">verified</span>
+                Acuse CAL
+              </span>
+              <span *ngIf="obj.tipo !== 'Resolución Directoral' && obj.tipo !== 'Constancia CAD' && obj.tipo !== 'Constancia CAL'" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                <span class="material-symbols-outlined text-[12px]">description</span>
+                {{ obj.tipo }}
+              </span>
+            </td>
+
+            <!-- Tamaño -->
+            <td class="px-4 py-3 font-mono">
+              {{ obj.size_formatted }}
+            </td>
+
+            <!-- Fecha -->
+            <td class="px-4 py-3 font-mono text-[11px] text-slate-500 dark:text-slate-400">
+              {{ obj.last_modified ? (obj.last_modified | date:'dd/MM/yyyy HH:mm:ss') : 'Fecha de Registro' }}
+            </td>
+
+            <!-- ETag -->
+            <td class="px-4 py-3 font-mono text-[11px]">
+              <span class="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-600 dark:text-slate-400 select-all" [title]="obj.etag">
+                {{ obj.etag ? obj.etag.substring(0, 12) + '...' : 'WORM S3' }}
+              </span>
+            </td>
+
+            <!-- Botones de Acción -->
+            <td class="px-4 py-3 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <button 
+                  (click)="abrirVisor(obj)" 
+                  class="p-1.5 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/60 transition-colors"
+                  title="Inspeccionar y Previsualizar Documento Oficial">
+                  <span class="material-symbols-outlined text-base">visibility</span>
+                </button>
+
+                <a 
+                  [href]="obj.download_url" 
+                  target="_blank" 
+                  download 
+                  class="p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  title="Descargar archivo PDF desde MinIO">
+                  <span class="material-symbols-outlined text-base">download</span>
+                </a>
+
+                <button 
+                  (click)="copiarAlPortapapeles(obj.etag, 'Hash ETag')" 
+                  class="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  title="Copiar Hash Criptográfico">
+                  <span class="material-symbols-outlined text-base">content_copy</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="objetosFiltrados().length === 0">
+            <td colspan="6" class="px-4 py-12 text-center text-slate-500 dark:text-slate-400">
+              <span class="material-symbols-outlined text-4xl text-slate-400 mb-2">folder_off</span>
+              <p>No se encontraron objetos custodiados en MinIO con los filtros seleccionados.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MODAL DE VISOR Y PREVISUALIZACIÓN CRIPTOGRÁFICA -->
+  <div *ngIf="modalVisorAbierto()" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/75 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-fadeIn">
+      <!-- Modal Header -->
+      <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/60">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-blue-600 dark:text-blue-400">verified</span>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">
+              Inspección y Custodia Criptográfica MinIO S3
+            </h3>
+            <p class="text-xs font-mono text-slate-500 dark:text-slate-400">
+              {{ objetoSeleccionado()?.name }}
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <a 
+            *ngIf="objetoSeleccionado()" 
+            [href]="objetoSeleccionado()?.download_url" 
+            target="_blank" 
+            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm">
+            <span class="material-symbols-outlined text-sm">download</span>
+            Descargar PDF
+          </a>
+
+          <button 
+            (click)="cerrarVisor()" 
+            class="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Body con Visor Embebido y Ficha Criptográfica -->
+      <div class="p-4 flex-1 overflow-y-auto space-y-4">
+        <!-- Tarjeta de Metadatos Criptográficos de No Repudio -->
+        <div class="bg-slate-50 dark:bg-slate-800/60 rounded-lg p-3.5 border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="font-semibold text-slate-700 dark:text-slate-300">
+              Certificación de No Repudio (Ley N° 27269 / D.S. N° 001-2020-MTC):
+            </span>
+            <span class="text-emerald-700 dark:text-emerald-400 font-mono font-bold bg-emerald-50 dark:bg-emerald-950/70 px-2 py-0.5 rounded">
+              VERIFICACIÓN POSITIVA
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px] font-mono">
+            <div>
+              <span class="text-slate-500 dark:text-slate-400">Bucket MinIO:</span>
+              <strong class="ml-1 text-slate-800 dark:text-slate-200">casillas-notificaciones</strong>
+            </div>
+            <div>
+              <span class="text-slate-500 dark:text-slate-400">Tamaño en Almacenamiento:</span>
+              <strong class="ml-1 text-slate-800 dark:text-slate-200">{{ objetoSeleccionado()?.size_formatted }}</strong>
+            </div>
+            <div class="md:col-span-2">
+              <span class="text-slate-500 dark:text-slate-400">ETag / Checksum:</span>
+              <code class="ml-1 text-blue-700 dark:text-blue-300 select-all">{{ objetoSeleccionado()?.etag }}</code>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visor Embebido Iframe del PDF -->
+        <div class="w-full h-[520px] rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden bg-slate-100 dark:bg-slate-950">
+          <iframe 
+            *ngIf="urlVisorSegura()" 
+            [src]="urlVisorSegura()" 
+            class="w-full h-full border-0">
+          </iframe>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <span>Custodia inmutable bajo política WORM en infraestructura MinIO S3 de la DRTC Puno.</span>
+        <button 
+          (click)="cerrarVisor()" 
+          class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+          Cerrar Visor
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE SUBIDA MANUAL A MINIO -->
+  <div *ngIf="modalSubidaAbierto()" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/75 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-lg overflow-hidden animate-fadeIn">
+      <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/60">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span class="material-symbols-outlined text-blue-600 dark:text-blue-400">cloud_upload</span>
+          Subir Documento Oficial a MinIO S3
+        </h3>
+        <button (click)="modalSubidaAbierto.set(false)" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            Tipo de Documento Administrativo
+          </label>
+          <select 
+            [(ngModel)]="tipoDocSubida"
+            class="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 p-2">
+            <option value="RESOLUCION_DIRECTORAL">Resolución Directoral Regional</option>
+            <option value="ANEXO_ADMINISTRATIVO">Anexo / Informe Técnico</option>
+            <option value="CEDULA_NOTIFICACION">Cédula de Notificación</option>
+            <option value="ACTA_FISCALIZACION">Acta de Fiscalización de Transporte</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            Archivo PDF Oficial (Máximo 20 MB)
+          </label>
+          <input 
+            type="file" 
+            accept="application/pdf"
+            (change)="onArchivoSeleccionado($event)"
+            class="w-full text-slate-700 dark:text-slate-300 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 dark:file:bg-blue-950 dark:file:text-blue-300 hover:file:bg-blue-100">
+        </div>
+
+        <!-- Pre-computo SHA-256 en vivo -->
+        <div *ngIf="hashSha256Calculado()" class="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-lg border border-blue-200 dark:border-blue-900 space-y-1">
+          <div class="flex items-center gap-1 font-semibold text-blue-900 dark:text-blue-300">
+            <span class="material-symbols-outlined text-xs">fingerprint</span>
+            Huella Digital SHA-256 Calculada en el Navegador:
+          </div>
+          <code class="block font-mono text-[11px] text-blue-800 dark:text-blue-400 break-all select-all">
+            {{ hashSha256Calculado() }}
+          </code>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 flex items-center justify-end gap-2">
+        <button 
+          (click)="modalSubidaAbierto.set(false)" 
+          class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+          Cancelar
+        </button>
+        <button 
+          (click)="subirArchivo()" 
+          [disabled]="!archivoParaSubir() || subiendoArchivo()"
+          class="px-4 py-2 rounded-lg bg-blue-700 text-white text-xs font-medium hover:bg-blue-800 transition-colors disabled:opacity-50 flex items-center gap-1">
+          <span *ngIf="subiendoArchivo()" class="material-symbols-outlined text-sm animate-spin">sync</span>
+          {{ subiendoArchivo() ? 'Custodiando en S3...' : 'Subir y Custodiar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

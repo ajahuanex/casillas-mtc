@@ -8,7 +8,7 @@ import { Notificacion, CrearNotificacionPayload, EstadoNotificacion } from '../m
 })
 export class NotificacionesService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8000/api/v1/notificaciones';
+  private baseUrl = '/api/v1';
 
   // Signals para gestión reactiva del estado
   private notificacionesSignal = signal<Notificacion[]>([]);
@@ -35,13 +35,16 @@ export class NotificacionesService {
     this.notificacionesSignal().filter(n => n.estado === 'LEIDO_NOTIFICADO').length
   );
 
-  verificarCasilla(numeroDocumento: string, tipoPersona: string = '00001', tipoDocumento: string = '00002') {
-    const params = new HttpParams()
-      .set('numero_documento', numeroDocumento)
-      .set('tipo_persona', tipoPersona)
-      .set('tipo_documento', tipoDocumento);
+  verificarCasilla(numeroDocumento: string, tipoPersona?: string, tipoDocumento?: string): Observable<any> {
+    let params = new HttpParams().set('numero_documento', numeroDocumento);
+    if (tipoPersona) params = params.set('tipo_persona', tipoPersona);
+    if (tipoDocumento) params = params.set('tipo_documento', tipoDocumento);
 
-    return this.http.get<any>(`${this.apiUrl}/verificar-casilla`, { params });
+    return this.http.get<any>(`${this.baseUrl}/notificaciones/verificar-casilla`, { params });
+  }
+
+  obtenerDashboardAlertas(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/dashboard/alertas`);
   }
 
   cargarNotificaciones(estado?: EstadoNotificacion, codigoExpediente?: string): Observable<Notificacion[]> {
@@ -52,7 +55,7 @@ export class NotificacionesService {
     if (estado) params = params.set('estado', estado);
     if (codigoExpediente) params = params.set('codigo_expediente', codigoExpediente);
 
-    return this.http.get<Notificacion[]>(this.apiUrl, { params }).pipe(
+    return this.http.get<Notificacion[]>(`${this.baseUrl}/notificaciones/`, { params }).pipe(
       tap({
         next: (data) => {
           this.notificacionesSignal.set(data);
@@ -76,9 +79,11 @@ export class NotificacionesService {
     formData.append('tipo_documento_destinatario', payload.tipo_documento_destinatario);
     formData.append('numero_documento_destinatario', payload.numero_documento_destinatario);
     formData.append('nombre_destinatario', payload.nombre_destinatario);
+    formData.append('plazo_dias_habiles', (payload.plazo_dias_habiles || 15).toString());
+    formData.append('tipo_procedimiento', payload.tipo_procedimiento || 'Procedimiento Administrativo Sancionador');
     formData.append('archivo', payload.archivo);
 
-    return this.http.post<Notificacion>(this.apiUrl, formData).pipe(
+    return this.http.post<Notificacion>(`${this.baseUrl}/notificaciones/`, formData).pipe(
       tap({
         next: (nueva) => {
           this.notificacionesSignal.update(lista => [nueva, ...lista]);
@@ -94,7 +99,7 @@ export class NotificacionesService {
 
   firmarDigitalmente(notificacionId: string): Observable<Notificacion> {
     this.loadingSignal.set(true);
-    return this.http.post<Notificacion>(`${this.apiUrl}/${notificacionId}/firmar`, {}).pipe(
+    return this.http.post<Notificacion>(`${this.baseUrl}/notificaciones/${notificacionId}/firmar`, {}).pipe(
       tap({
         next: (actualizada) => {
           this.notificacionesSignal.update(lista => 
@@ -113,7 +118,7 @@ export class NotificacionesService {
   depositarEnCasilla(notificacionId: string, idCategoria: number = 5): Observable<Notificacion> {
     this.loadingSignal.set(true);
     let params = new HttpParams().set('id_categoria', idCategoria.toString());
-    return this.http.post<Notificacion>(`${this.apiUrl}/${notificacionId}/depositar`, {}, { params }).pipe(
+    return this.http.post<Notificacion>(`${this.baseUrl}/notificaciones/${notificacionId}/depositar`, {}, { params }).pipe(
       tap({
         next: (actualizada) => {
           this.notificacionesSignal.update(lista => 
@@ -131,7 +136,7 @@ export class NotificacionesService {
 
   sincronizarConstancias(notificacionId: string): Observable<Notificacion> {
     this.loadingSignal.set(true);
-    return this.http.post<Notificacion>(`${this.apiUrl}/${notificacionId}/sincronizar-constancias`, {}).pipe(
+    return this.http.post<Notificacion>(`${this.baseUrl}/notificaciones/${notificacionId}/sincronizar-constancias`, {}).pipe(
       tap({
         next: (actualizada) => {
           this.notificacionesSignal.update(lista => 
@@ -146,4 +151,29 @@ export class NotificacionesService {
       })
     );
   }
+
+  // --- MÉTODOS DE BÓVEDA Y CUSTODIA DIGITAL MINIO S3 ---
+
+  obtenerEstadoMinio(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/storage/status`);
+  }
+
+  obtenerObjetosMinio(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/storage/objects`);
+  }
+
+  subirDocumentoMinio(file: File, tipoDocumento: string = 'ANEXO_ADMINISTRATIVO', notificacionId?: string): Observable<any> {
+    const formData = new FormData();
+    formData.append('archivo', file);
+    formData.append('tipo_documento', tipoDocumento);
+    if (notificacionId) {
+      formData.append('notificacion_id', notificacionId);
+    }
+    return this.http.post<any>(`${this.baseUrl}/storage/upload`, formData);
+  }
+
+  poblarDocumentosFaltantes(): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/storage/seed-missing`, {});
+  }
 }
+

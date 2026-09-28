@@ -73,14 +73,87 @@ class StorageService:
             response.close()
             response.release_conn()
 
+    def get_download_url(self, object_path: str) -> str:
+        """
+        Retorna la URL accesible para descargar/visualizar el documento.
+        Usa la ruta proxy de la API para garantizar compatibilidad con navegadores
+        evitando problemas de resolución de nombres de contenedor Docker.
+        """
+        clean_path = object_path.lstrip("/")
+        return f"/api/v1/storage/file/{clean_path}"
+
     def get_presigned_url(self, object_path: str, expires_seconds: int = 3600) -> str:
-        """Genera una URL temporal firmada para visualización segura en frontend."""
-        from datetime import timedelta
-        return self.client.presigned_get_object(
-            self.bucket_name,
-            object_path,
-            expires=timedelta(seconds=expires_seconds)
-        )
+        """
+        Genera una URL temporal firmada o la URL proxy de descarga directa.
+        Para evitar fallos de DNS en el cliente web, retornamos la URL de streaming segura.
+        """
+        return self.get_download_url(object_path)
+
+    def get_storage_status(self) -> dict:
+        """Retorna el estado de salud, cuota y métricas de MinIO S3."""
+        try:
+            exists = self.client.bucket_exists(self.bucket_name)
+            if not exists:
+                return {
+                    "status": "error",
+                    "mensaje": f"El bucket '{self.bucket_name}' no existe.",
+                    "bucket": self.bucket_name,
+                    "endpoint": settings.MINIO_ENDPOINT,
+                    "total_objects": 0,
+                    "total_bytes": 0
+                }
+            
+            objects = list(self.client.list_objects(self.bucket_name, recursive=True))
+            total_bytes = sum(o.size for o in objects if o.size)
+            
+            return {
+                "status": "en_linea",
+                "mensaje": "Clúster MinIO S3 conectado y operando con integridad WORM.",
+                "endpoint": settings.MINIO_ENDPOINT,
+                "bucket": self.bucket_name,
+                "bucket_exists": True,
+                "total_objects": len(objects),
+                "total_bytes": total_bytes,
+                "total_mb": round(total_bytes / (1024 * 1024), 2),
+                "secure": settings.MINIO_SECURE,
+                "host_publico": settings.MINIO_PUBLIC_URL_BASE
+            }
+        except Exception as e:
+            logger.error(f"Error consultando estado de MinIO: {e}")
+            return {
+                "status": "desconectado",
+                "mensaje": str(e),
+                "endpoint": settings.MINIO_ENDPOINT,
+                "bucket": self.bucket_name,
+                "bucket_exists": False,
+                "total_objects": 0,
+                "total_bytes": 0
+            }
+
+    def list_objects_metadata(self) -> list:
+        """Lista los objetos almacenados en MinIO con metadatos de auditoría."""
+        try:
+            objects = self.client.list_objects(self.bucket_name, recursive=True)
+            res = []
+            for obj in objects:
+                res.append({
+                    "name": obj.object_name,
+                    "size_bytes": obj.size,
+                    "size_formatted": f"{(obj.size / (1024*1024)):.2f} MB" if obj.size >= 1048576 else f"{(obj.size / 1024):.1f} KB",
+                    "last_modified": obj.last_modified.isoformat() if obj.last_modified else None,
+                    "etag": (obj.etag or "").replace('"', ''),
+                    "download_url": self.get_download_url(obj.object_name),
+                    "tipo": "Resolución Directoral" if "original" in obj.object_name or "acto" in obj.object_name else (
+                        "Constancia CAD" if "cad" in obj.object_name else (
+                            "Constancia CAL" if "cal" in obj.object_name else "Cédula / Anexo"
+                        )
+                    )
+                })
+            return res
+        except Exception as e:
+            logger.error(f"Error listando objetos en MinIO: {e}")
+            return []
 
 
 storage_service = StorageService()
+

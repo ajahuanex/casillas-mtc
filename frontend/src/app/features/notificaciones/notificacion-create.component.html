@@ -1,25 +1,37 @@
-<div class="max-w-4xl mx-auto space-y-6">
-  <!-- Encabezado -->
-  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-200">
+<div class="space-y-6">
+  <!-- Encabezado de la Pantalla y Breadcrumbs -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-4 gap-3">
     <div>
-      <h2 class="text-2xl font-bold text-slate-800">Emisión de Notificación Electrónica</h2>
-      <p class="text-sm text-slate-500">Registro de acto administrativo con custodia MinIO S3 y Casilla Electrónica MTC / DRTC</p>
+      <div class="flex items-center gap-2">
+        <span class="h-6 w-1.5 bg-[#dc2626] rounded-xs"></span>
+        <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+          Módulo de Emisión y Validación en Tiempo Real de Casilla Electrónica MTC
+        </h1>
+      </div>
+      <p class="text-xs sm:text-sm text-slate-500 mt-1">
+        Validación telemática instantánea contra el Registro Nacional del MTC y emisión de Cédula Notificable con custodia legal MinIO S3.
+      </p>
     </div>
     <div class="flex items-center gap-2">
       <button type="button" (click)="consultarGeminiAI()" class="btn btn-gemini text-xs font-semibold">
-        ✨ Asistente Gemini AI
+        <span class="material-symbols-outlined text-[16px]">auto_awesome</span>
+        <span>Asistente Gemini AI</span>
       </button>
-      <a routerLink="/" class="btn btn-outline text-xs">⬅️ Volver a Bandeja</a>
+      <a routerLink="/" class="btn btn-outline text-xs">
+        <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+        <span>Bandeja General</span>
+      </a>
     </div>
   </div>
 
   <!-- Panel de Sugerencias Gemini AI -->
   @if (iaActiva()) {
-    <div class="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg space-y-2">
-      <div class="flex items-center gap-2 text-purple-900 font-semibold text-sm">
-        <span>✨ Análisis Asistido por Gemini AI:</span>
+    <div class="p-4 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border border-indigo-200 rounded-lg space-y-2 shadow-xs">
+      <div class="flex items-center gap-2 text-indigo-900 font-bold text-xs uppercase tracking-wide">
+        <span class="material-symbols-outlined text-indigo-700 text-[18px]">psychology</span>
+        <span>Análisis Normativo Asistido por Gemini AI (TUO Ley N° 27444):</span>
       </div>
-      <ul class="text-xs text-purple-800 space-y-1 list-disc list-inside">
+      <ul class="text-xs text-indigo-900 space-y-1 list-disc list-inside">
         @for (sug of sugerenciasIa(); track sug) {
           <li>{{ sug }}</li>
         }
@@ -27,126 +39,530 @@
     </div>
   }
 
-  <div class="card bg-white shadow-sm rounded-lg p-6">
-    <form (ngSubmit)="guardar()" #form="ngForm" class="space-y-6">
-      
-      <!-- Sección 1: Destinatario y Verificación MTC en Vivo -->
-      <div>
-        <h3 class="text-base font-semibold text-slate-800 pb-2 border-b border-slate-200 flex items-center justify-between">
-          <span>1. Destinatario y Verificación de Casilla MTC</span>
-          <span class="text-xs font-normal text-slate-500">Endpoint: GET /api/v2/info</span>
-        </h3>
+  <!-- Grid Principal (8 Columnas de Flujo + 4 Columnas de Panel Legal) -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    
+    <!-- ================================================================= -->
+    <!-- COLUMNA IZQUIERDA: 8 COLUMNAS (SECCIONES OPERATIVAS)               -->
+    <!-- ================================================================= -->
+    <div class="lg:col-span-8 flex flex-col gap-6">
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-          <div>
-            <label class="block text-xs font-medium text-slate-700 mb-1">Tipo de Documento *</label>
-            <select [(ngModel)]="tipoDocumento" name="tipoDocumento" 
-                    class="w-full text-sm rounded-md border border-slate-300 p-2 focus:ring-1 focus:ring-drtc-700">
-              <option value="DNI">DNI (00002)</option>
-              <option value="RUC">RUC (00001)</option>
-              <option value="CE">Carné Extranjería</option>
-            </select>
+      <!-- SECCIÓN 1: Validador en Tiempo Real de Casilla Electrónica MTC -->
+      <div class="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
+        <div class="border-t-2 border-[#dc2626] bg-slate-50 px-5 py-3 flex items-center justify-between border-b border-slate-200">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-blue-900 text-[20px]">manage_search</span>
+            <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wide">
+              1. Validador en Tiempo Real de Casilla Electrónica MTC
+            </h2>
           </div>
-          <div class="md:col-span-2">
-            <label class="block text-xs font-medium text-slate-700 mb-1">Número de Documento *</label>
-            <div class="flex gap-2">
-              <input type="text" [(ngModel)]="numeroDocumento" name="numeroDocumento" required placeholder="Ej: 70123456" 
-                     class="flex-1 text-sm rounded-md border border-slate-300 p-2 focus:ring-1 focus:ring-drtc-700">
-              <button type="button" (click)="verificarCasillaMTC()" class="btn btn-outline text-xs whitespace-nowrap" [disabled]="verificandoCasilla()">
+          <span class="text-[11px] font-mono-code text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+            Endpoint: GET /verificar-estado-casilla
+          </span>
+        </div>
+
+        <div class="p-5 flex flex-col gap-4">
+          <!-- Selector: Tipo de Persona Tabs -->
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1.5">Tipo de Administrado</label>
+            <div class="inline-flex rounded p-0.5 bg-slate-100 border border-slate-200 gap-1" role="tablist">
+              <button type="button" (click)="cambiarTipoPersona('00002')"
+                      [ngClass]="tipoPersona === '00002' ? 'bg-blue-900 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+                      class="px-3 py-1.5 rounded text-xs transition-all">
+                Persona Jurídica (Empresas de Transporte)
+              </button>
+              <button type="button" (click)="cambiarTipoPersona('00001')"
+                      [ngClass]="tipoPersona === '00001' ? 'bg-blue-900 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+                      class="px-3 py-1.5 rounded text-xs transition-all">
+                Persona Natural (Conductores / Titulares)
+              </button>
+              <button type="button" (click)="cambiarTipoPersona('00004')"
+                      [ngClass]="tipoPersona === '00004' ? 'bg-blue-900 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+                      class="px-3 py-1.5 rounded text-xs transition-all">
+                Persona Extranjera (Convenio ATU / Mercosur)
+              </button>
+            </div>
+          </div>
+
+          <!-- Campos de Búsqueda -->
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+            <div class="sm:col-span-4">
+              <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Tipo de Documento</label>
+              <select [(ngModel)]="tipoDocumento" name="tipoDocumento"
+                      class="w-full h-9 rounded bg-white border border-slate-300 text-xs text-slate-800 px-2 focus:border-blue-900 focus:ring-1 focus:ring-blue-900">
+                <option value="RUC">RUC - Registro Único de Contribuyentes</option>
+                <option value="DNI">DNI - Documento Nacional de Identidad</option>
+                <option value="CE">Carné de Extranjería (CE)</option>
+                <option value="PASAPORTE">Pasaporte Mercosur</option>
+              </select>
+            </div>
+            <div class="sm:col-span-5">
+              <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Número de Identificación Fiscal / Documento</label>
+              <div class="relative">
+                <input type="text" [(ngModel)]="numeroDocumento" name="numeroDocumento"
+                       placeholder="Ej: 20448192031"
+                       class="w-full h-9 rounded bg-white border border-slate-300 font-mono-code text-xs text-slate-900 px-3 focus:border-blue-900 focus:ring-1 focus:ring-blue-900">
+                <span class="absolute right-2.5 top-2 text-[10px] text-emerald-700 font-mono-code font-bold">SUNAT ACTIVO</span>
+              </div>
+            </div>
+            <div class="sm:col-span-3">
+              <button type="button" (click)="verificarCasillaMTC()" [disabled]="verificandoCasilla()"
+                      class="w-full h-9 bg-blue-900 hover:bg-slate-900 text-white rounded text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs">
                 @if (verificandoCasilla()) {
-                  ⏳ Verificando...
+                  <span class="animate-spin material-symbols-outlined text-[15px]">refresh</span>
+                  <span>Consultando...</span>
                 } @else {
-                  🔍 Verificar Casilla MTC
+                  <span class="material-symbols-outlined text-[15px]">search</span>
+                  <span>Verificar en MTC</span>
                 }
               </button>
             </div>
           </div>
-        </div>
 
-        <!-- Estado de la Verificación MTC -->
-        @if (mensajeCasilla()) {
-          <div class="mt-3 p-3 rounded-md text-xs font-medium" 
-               [ngClass]="casillaVerificada() ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'">
-            {{ mensajeCasilla() }}
-          </div>
-        }
+          <!-- Resultado en Tiempo Real (Card Verde de Verificación con Efecto Ping) -->
+          @if (casillaVerificada()) {
+            <div class="rounded border border-emerald-300 bg-emerald-50/60 p-4 flex flex-col gap-3">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-emerald-200 gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="flex h-3 w-3 relative">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-600"></span>
+                  </span>
+                  <span class="text-xs font-bold text-emerald-950 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-emerald-700 text-[18px] fill-icon">verified</span>
+                    {{ mensajeCasilla() }}
+                  </span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] text-slate-500 font-mono-code">Casilla ID:</span>
+                  <span class="font-mono-code text-xs bg-white text-emerald-950 font-bold px-2 py-0.5 rounded border border-emerald-300 flex items-center gap-1.5">
+                    {{ casillaId() }}
+                    <button type="button" (click)="copiarTexto(casillaId(), 'casilla')" class="hover:text-blue-900" title="Copiar ID de Casilla">
+                      <span class="material-symbols-outlined text-[13px]">content_copy</span>
+                    </button>
+                  </span>
+                </div>
+              </div>
 
-        <div class="mt-4">
-          <label class="block text-xs font-medium text-slate-700 mb-1">Nombre Completo o Razón Social *</label>
-          <input type="text" [(ngModel)]="nombreDestinatario" name="nombreDestinatario" required placeholder="Ej: JUAN PEREZ CONDORI"
-                 class="w-full text-sm rounded-md border border-slate-300 p-2 focus:ring-1 focus:ring-drtc-700">
-        </div>
-      </div>
-
-      <!-- Sección 2: Datos del Acto Administrativo -->
-      <div>
-        <h3 class="text-base font-semibold text-slate-800 pb-2 border-b border-slate-200">
-          2. Identificación del Expediente y Acto Administrativo
-        </h3>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <div>
-            <label class="block text-xs font-medium text-slate-700 mb-1">N° de Expediente *</label>
-            <input type="text" [(ngModel)]="codigoExpediente" name="codigoExpediente" required placeholder="Ej: EXP-2026-00481" 
-                   class="w-full text-sm rounded-md border border-slate-300 p-2 focus:ring-1 focus:ring-drtc-700">
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-700 mb-1">N° Acto Administrativo *</label>
-            <input type="text" [(ngModel)]="numeroActo" name="numeroActo" required placeholder="Ej: R.D. N° 045-2026-DRTC"
-                   class="w-full text-sm rounded-md border border-slate-300 p-2 focus:ring-1 focus:ring-drtc-700">
-          </div>
-        </div>
-
-        <div class="mt-4">
-          <label class="block text-xs font-medium text-slate-700 mb-1">Asunto de la Notificación *</label>
-          <input type="text" [(ngModel)]="asunto" name="asunto" required placeholder="Ej: Notificación de Resolución de Licencia de Conducir"
-                 class="w-full text-sm rounded-md border border-slate-300 p-2 focus:ring-1 focus:ring-drtc-700">
-        </div>
-
-        <div class="mt-4">
-          <label class="block text-xs font-medium text-slate-700 mb-1">
-            Resumen / Notificación para el Administrado (HTML Oficial MTC)
-          </label>
-          <textarea [(ngModel)]="descripcion" name="descripcion" rows="3" 
-                    placeholder="El sistema incorporará este texto dentro de la plantilla HTML oficial institucional de la Casilla MTC..."
-                    class="w-full text-sm rounded-md border border-slate-300 p-2 focus:ring-1 focus:ring-drtc-700"></textarea>
-        </div>
-      </div>
-
-      <!-- Sección 3: Documento PDF a Notificar -->
-      <div>
-        <h3 class="text-base font-semibold text-slate-800 pb-2 border-b border-slate-200">
-          3. Archivo PDF del Acto Administrativo (Custodia MinIO con Hash SHA-256)
-        </h3>
-
-        <div class="mt-4 border-2 border-dashed border-slate-300 hover:border-drtc-700 transition-colors p-6 rounded-lg text-center bg-slate-50">
-          <input type="file" (change)="onFileSelected($event)" accept="application/pdf" class="hidden" #fileInput>
-          <button type="button" class="btn btn-outline" (click)="fileInput.click()">
-            📎 Seleccionar Archivo PDF
-          </button>
-          @if (archivoSeleccionado) {
-            <p class="mt-3 text-sm text-sky-700 font-semibold">
-              ✓ Archivo: {{ archivoSeleccionado.name }} ({{ (archivoSeleccionado.size / 1024).toFixed(1) }} KB)
-            </p>
-          } @else {
-            <p class="mt-2 text-xs text-slate-400">
-              Solo PDF. Al registrar, MinIO guardará el archivo de forma inmutable y calculará su hash SHA-256.
-            </p>
+              <!-- Metadatos Validados de la Casilla MTC -->
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2 text-xs pt-1">
+                <div>
+                  <span class="text-[11px] text-slate-500 block font-semibold">Razón Social / Administrado</span>
+                  <div class="font-bold text-slate-900 flex items-center gap-1">
+                    {{ nombreDestinatario }}
+                    <span class="material-symbols-outlined text-blue-800 text-[14px] fill-icon" title="Validado en Padrón">check_circle</span>
+                  </div>
+                </div>
+                <div>
+                  <span class="text-[11px] text-slate-500 block font-semibold">Representante Legal</span>
+                  <div class="text-slate-800 font-medium">{{ representanteLegal() }}</div>
+                </div>
+                <div>
+                  <span class="text-[11px] text-slate-500 block font-semibold">Domicilio Legal Telemático</span>
+                  <div class="text-slate-800">{{ domicilioLegal() }}</div>
+                </div>
+                <div>
+                  <span class="text-[11px] text-slate-500 block font-semibold">Correo Electrónico Notificable</span>
+                  <div class="font-mono-code text-slate-800 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-slate-400 text-[14px]">mail</span>
+                    {{ correoNotificable() }}
+                    <span class="text-emerald-700 font-semibold">[Verificado]</span>
+                  </div>
+                </div>
+                <div>
+                  <span class="text-[11px] text-slate-500 block font-semibold">Teléfono de Alerta SMS</span>
+                  <div class="font-mono-code text-slate-800 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-slate-400 text-[14px]">sms</span>
+                    {{ telefonoSMS() }}
+                    <span class="text-emerald-700 font-semibold">[OTP Conforme]</span>
+                  </div>
+                </div>
+                <div>
+                  <span class="text-[11px] text-slate-500 block font-semibold">Estado de Domiciliación</span>
+                  <div class="text-emerald-800 font-medium flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[15px] text-emerald-700">task_alt</span>
+                    {{ estadoDomiciliacion() }}
+                  </div>
+                </div>
+              </div>
+            </div>
           }
         </div>
       </div>
 
-      <!-- Botones de Acción -->
-      <div class="flex justify-end gap-3 pt-4 border-t border-slate-200">
-        <a routerLink="/" class="btn btn-outline">Cancelar</a>
-        <button type="submit" class="btn btn-primary" [disabled]="!archivoSeleccionado || service.loading()">
+      <!-- SECCIÓN 2: Metadatos del Acto Administrativo y Notificación Oficial -->
+      <div class="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
+        <div class="border-t-2 border-blue-900 bg-slate-50 px-5 py-3 flex items-center justify-between border-b border-slate-200">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-blue-900 text-[20px]">assignment</span>
+            <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wide">
+              2. Metadatos del Acto Administrativo y Cédula de Notificación
+            </h2>
+          </div>
+          <span class="text-[11px] font-mono-code text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+            TUPA DRTC Puno N° 04-TRANS-2026
+          </span>
+        </div>
+
+        <div class="p-5 flex flex-col gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 uppercase mb-1">N° Expediente Administrativo *</label>
+              <input type="text" [(ngModel)]="codigoExpediente" name="codigoExpediente"
+                     class="w-full h-9 rounded bg-white border border-slate-300 font-mono-code text-xs text-slate-900 px-3 focus:border-blue-900 focus:ring-1 focus:ring-blue-900">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Acto Administrativo / N° RD *</label>
+              <input type="text" [(ngModel)]="numeroActo" name="numeroActo"
+                     class="w-full h-9 rounded bg-white border border-slate-300 font-mono-code text-xs text-blue-900 font-bold px-3 focus:border-blue-900 focus:ring-1 focus:ring-blue-900">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Categoría de Trámite MTC *</label>
+              <select [(ngModel)]="categoriaTramite" name="categoriaTramite"
+                      class="w-full h-9 rounded bg-white border border-slate-300 text-xs text-slate-900 px-2 focus:border-blue-900 focus:ring-1 focus:ring-blue-900">
+                <option value="Habilitación Vehicular y Tarjeta Única de Circulación (TUC)">Habilitación Vehicular y Tarjeta Única de Circulación (TUC)</option>
+                <option value="Fiscalización y Sanciones de Tránsito">Fiscalización y Sanciones de Tránsito</option>
+                <option value="Autorización de Rutas Interprovinciales">Autorización de Rutas Interprovinciales</option>
+                <option value="Renovación de Concesión Regional">Renovación de Concesión Regional</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Fecha de Emisión del Acto</label>
+              <div class="relative">
+                <input type="text" [(ngModel)]="fechaEmision" name="fechaEmision"
+                       class="w-full h-9 rounded bg-white border border-slate-300 font-mono-code text-xs text-slate-900 px-3">
+                <span class="material-symbols-outlined absolute right-2.5 top-2 text-slate-400 text-[16px]">calendar_today</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Plazo Legal para Descargo</label>
+              <div class="h-9 flex items-center px-3 rounded bg-amber-50 border border-amber-300 text-amber-900 text-xs font-semibold">
+                <span class="material-symbols-outlined text-amber-700 text-[16px] mr-1">timer</span>
+                15 días hábiles (Recurso Administrativo)
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Plazo Máximo Notificación MTC</label>
+              <div class="h-9 flex items-center px-3 rounded bg-slate-100 border border-slate-200 text-slate-800 text-xs font-semibold">
+                <span class="material-symbols-outlined text-blue-900 text-[16px] mr-1">schedule</span>
+                5 días hábiles (Vence: Inmediato)
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Asunto de la Notificación Oficial en Casilla MTC *</label>
+            <input type="text" [(ngModel)]="asunto" name="asunto"
+                   class="w-full h-9 rounded bg-white border border-slate-300 text-xs text-slate-900 px-3 focus:border-blue-900 focus:ring-1 focus:ring-blue-900">
+          </div>
+
+          <!-- Previsualización de la Cédula Notificable Oficial -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-slate-700 uppercase flex items-center gap-1">
+                <span class="material-symbols-outlined text-[15px]">description</span>
+                Previsualización de la Cédula Notificable (Formato Oficial Ley N° 27444)
+              </span>
+              <span class="text-[11px] font-mono-code text-slate-500">
+                Membrete Oficial DRTC Puno / MTC
+              </span>
+            </div>
+
+            <div class="rounded border border-slate-300 bg-white p-6 relative shadow-xs watermark-pattern">
+              <!-- Membrete con Logos -->
+              <div class="border-b-2 border-slate-200 pb-3 mb-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+                <div class="flex items-center gap-3">
+                  <img src="/assets/logos/sello-circulacion-terrestre-puno.png" alt="DRTC Puno" class="h-12 w-auto object-contain">
+                  <div>
+                    <div class="text-xs font-bold text-blue-900 uppercase">Gobierno Regional Puno</div>
+                    <div class="text-xs font-semibold text-slate-800">Dirección Regional de Transportes y Comunicaciones</div>
+                    <div class="text-[11px] text-slate-500">Dirección de Circulación Terrestre y Fiscalización</div>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div class="text-xs font-bold text-slate-900">CÉDULA DE NOTIFICACIÓN TELEMÁTICA</div>
+                  <div class="font-mono-code text-xs text-blue-900 font-bold">N° 08492-2026-DRTC-PUNO/STT</div>
+                </div>
+              </div>
+
+              <!-- Cuerpo Legal -->
+              <div class="space-y-3 text-xs text-slate-800 leading-relaxed relative z-10">
+                <p>
+                  <strong class="font-semibold text-slate-900">DESTINATARIO:</strong> {{ nombreDestinatario }} &nbsp;|&nbsp;
+                  <strong class="font-semibold text-slate-900">{{ tipoDocumento }}:</strong> {{ numeroDocumento }} &nbsp;|&nbsp;
+                  <strong class="font-semibold text-slate-900">CASILLA MTC:</strong> {{ casillaId() }}
+                </p>
+                <p>
+                  Por la presente, en cumplimiento del <em>Artículo 20° numeral 20.1.2 del Texto Único Ordenado de la Ley N° 27444</em> - Ley del Procedimiento Administrativo General, y conforme a lo prescrito en el <em>Decreto Supremo N° 001-2020-MTC</em>, se notifica el siguiente Acto Administrativo:
+                </p>
+                <div class="p-3 bg-slate-50 rounded border border-slate-200 font-mono-code text-xs space-y-1">
+                  <div><strong>RESOLUCIÓN DIRECTORAL:</strong> {{ numeroActo }}</div>
+                  <div><strong>EXPEDIENTE MATRIZ:</strong> {{ codigoExpediente }}</div>
+                  <div><strong>ASUNTO:</strong> {{ asunto }}</div>
+                  <div><strong>DECISIÓN:</strong> <span class="text-blue-900 font-bold">{{ descripcion }}</span></div>
+                </div>
+                <p class="text-[11px] text-slate-500 italic">
+                  Nota de Repudio y Validez Legal: La presente notificación se entenderá válidamente efectuada cuando el acto administrativo sea depositado en la Casilla Electrónica asignada por el MTC, surtiendo efectos legales conforme al Art. 25 del D.S. N° 001-2020-MTC.
+                </p>
+              </div>
+
+              <!-- Franja de Firma Digital Autorizada -->
+              <div class="mt-4 pt-3 border-t border-dashed border-slate-300 flex flex-col sm:flex-row items-center justify-between gap-2 bg-slate-50 p-2.5 rounded">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-blue-900 text-[22px]">verified</span>
+                  <div>
+                    <div class="text-[11px] font-bold text-blue-900 uppercase">Firma Digital Autorizada - Ley N° 27269</div>
+                    <div class="text-[10px] font-mono-code text-slate-500">Signatario: MAMANI QUISPE VICTOR RAUL (DRTC PUNO) | CA: PKI-RENIEC</div>
+                  </div>
+                </div>
+                <div class="text-right font-mono-code text-[11px]">
+                  <div class="text-slate-700 font-semibold">Sellado TSA: {{ fechaEmision }} 14:32:08 UTC-5</div>
+                  <div class="text-emerald-700 font-bold">Estado: Integridad Criptográfica Verificada</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN 3: Custodia Criptográfica MinIO S3 y Sellado de Tiempo TSA -->
+      <div class="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
+        <div class="border-t-2 border-blue-900 bg-slate-50 px-5 py-3 flex items-center justify-between border-b border-slate-200">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-blue-900 text-[20px]">enhanced_encryption</span>
+            <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wide">
+              3. Custodia Criptográfica en MinIO S3 y Sellado de Tiempo TSA
+            </h2>
+          </div>
+          <span class="text-[11px] font-mono-code text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+            Inmutabilidad SHA-256 Garantizada
+          </span>
+        </div>
+
+        <div class="p-5 flex flex-col gap-4">
+          <!-- Card de Archivo Adjunto -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded border border-slate-200 bg-slate-50 gap-3">
+            <div class="flex items-start gap-3">
+              <div class="w-10 h-10 rounded bg-red-100 border border-red-200 text-red-700 flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[24px]">picture_as_pdf</span>
+              </div>
+              <div>
+                <div class="text-xs font-bold text-slate-900 flex items-center gap-2 flex-wrap">
+                  <span>{{ nombreArchivo() }}</span>
+                  <span class="font-mono-code text-[11px] bg-white px-1.5 py-0.5 rounded border border-slate-200 text-slate-600">
+                    {{ tamanioArchivo() }}
+                  </span>
+                </div>
+                <div class="text-[11px] text-slate-500 mt-0.5">
+                  Documento digitalmente estructurado para custodia en MinIO con hash SHA-256 para validez probatoria.
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <input type="file" (change)="onFileSelected($event)" accept="application/pdf" class="hidden" #fileInput>
+              <button type="button" (click)="fileInput.click()" class="btn btn-outline text-xs">
+                <span class="material-symbols-outlined text-[15px]">upload_file</span>
+                <span>Cambiar PDF</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Tabla de Huella Criptográfica SHA-256 -->
+          <div class="rounded border border-slate-200 overflow-hidden text-xs">
+            <table class="w-full text-left">
+              <tbody class="divide-y divide-slate-200">
+                <tr class="bg-white">
+                  <td class="w-48 py-2.5 px-4 font-bold text-[11px] text-slate-600 bg-slate-50 uppercase">
+                    Hash SHA-256 (Checksum)
+                  </td>
+                  <td class="py-2.5 px-4">
+                    <div class="flex items-center justify-between gap-2 flex-wrap">
+                      <code class="font-mono-code text-xs text-blue-900 font-bold break-all">
+                        {{ sha256Hash() }}
+                      </code>
+                      <div class="flex items-center gap-1.5 shrink-0">
+                        <span class="text-emerald-700 font-semibold flex items-center gap-0.5 text-xs">
+                          <span class="material-symbols-outlined text-[15px]">check_circle</span> Conforme
+                        </span>
+                        <button type="button" (click)="copiarTexto(sha256Hash(), 'hash')" class="p-1 text-slate-400 hover:text-blue-900 rounded" title="Copiar Hash">
+                          <span class="material-symbols-outlined text-[15px]">content_copy</span>
+                        </button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                <tr class="bg-white">
+                  <td class="py-2.5 px-4 font-bold text-[11px] text-slate-600 bg-slate-50 uppercase">
+                    Cluster MinIO S3 DRTC
+                  </td>
+                  <td class="py-2.5 px-4 font-mono-code text-xs text-slate-800">
+                    s3-cluster.drtc.regionpuno.gob.pe <span class="text-slate-500">[Bucket: /notificaciones-2026/]</span>
+                  </td>
+                </tr>
+                <tr class="bg-white">
+                  <td class="py-2.5 px-4 font-bold text-[11px] text-slate-600 bg-slate-50 uppercase">
+                    Sellado de Tiempo (TSA)
+                  </td>
+                  <td class="py-2.5 px-4">
+                    <div class="flex items-center gap-2">
+                      <span class="font-mono-code text-xs text-slate-800">{{ selloTiempoTSA() }}</span>
+                      <span class="bg-emerald-50 text-emerald-800 border border-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded">
+                        TSA Indecopi Homologado
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- COLUMNA DERECHA: 4 COLUMNAS (STICKY PANEL DE ACCIONES & RESUMEN)   -->
+    <!-- ================================================================= -->
+    <aside class="lg:col-span-4 flex flex-col gap-5 lg:sticky lg:top-20">
+      
+      <!-- Card A: Telemetría de Sesión OAuth2 MTC -->
+      <div class="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
+        <div class="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-700 uppercase flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[16px] text-blue-900">vpn_key</span>
+            Sesión de Interoperabilidad MTC
+          </span>
+          <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+        </div>
+        <div class="p-4 space-y-2.5 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500">Token Bearer OAuth2:</span>
+            <span class="font-mono-code text-[11px] bg-emerald-100 text-emerald-900 border border-emerald-300 font-bold px-2 py-0.5 rounded">
+              Válido (Expira en 58m)
+            </span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500">Servidor MTC:</span>
+            <span class="font-mono-code text-[11px] text-slate-800 font-semibold">dvwscasilla.mtc.gob.pe</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500">Certificado Operador:</span>
+            <span class="font-mono-code text-[11px] text-blue-900 font-bold">RENIEC DNIe / DRTC-PUNO</span>
+          </div>
+          <div class="pt-2 border-t border-slate-200 flex items-center justify-between text-slate-500 text-[11px]">
+            <span>Huella de Sesión:</span>
+            <span class="font-mono-code text-slate-700 font-medium">JWT-MTC-PUN-2026-99</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card B: Matriz de Cumplimiento Legal y No Repudio -->
+      <div class="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
+        <div class="border-t-2 border-[#dc2626] bg-slate-50 px-4 py-2.5 border-b border-slate-200">
+          <h3 class="text-xs font-bold text-slate-900 uppercase flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px] text-blue-900">gavel</span>
+            Matriz de Cumplimiento y No Repudio
+          </h3>
+        </div>
+        <div class="p-4">
+          <ul class="space-y-3 text-xs">
+            <li class="flex items-start gap-2">
+              <span class="material-symbols-outlined text-emerald-700 text-[18px] fill-icon shrink-0">check_box</span>
+              <div>
+                <div class="font-bold text-slate-800">Validez y Eficacia Notificatoria Plena</div>
+                <div class="text-slate-500 text-[11px]">Conforme al Art. 20.1 del TUO de la Ley N° 27444.</div>
+              </div>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="material-symbols-outlined text-emerald-700 text-[18px] fill-icon shrink-0">check_box</span>
+              <div>
+                <div class="font-bold text-slate-800">Reglamento de Casilla Electrónica MTC</div>
+                <div class="text-slate-500 text-[11px]">Depósito formal bajo D.S. N° 001-2020-MTC sin vicios.</div>
+              </div>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="material-symbols-outlined text-emerald-700 text-[18px] fill-icon shrink-0">check_box</span>
+              <div>
+                <div class="font-bold text-slate-800">Constancia Automática de Depósito (CAD)</div>
+                <div class="text-slate-500 text-[11px]">Generación instantánea firmada con acuse legal oficial.</div>
+              </div>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="material-symbols-outlined text-emerald-700 text-[18px] fill-icon shrink-0">check_box</span>
+              <div>
+                <div class="font-bold text-slate-800">Certificado Digital PKI Homologado</div>
+                <div class="text-slate-500 text-[11px]">Algoritmo RSA 2048 / SHA-256 no repudiable.</div>
+              </div>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="material-symbols-outlined text-emerald-700 text-[18px] fill-icon shrink-0">check_box</span>
+              <div>
+                <div class="font-bold text-slate-800">Alertas Multicanal Habilitadas</div>
+                <div class="text-slate-500 text-[11px]">Disparo telemático de SMS y correo electrónico.</div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Card C: Acuse de Recibo Telemático (CAD) Preview -->
+      <div class="bg-white rounded-lg border border-slate-200 shadow-xs p-4 bg-slate-50/50">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold text-slate-700 uppercase flex items-center gap-1">
+            <span class="material-symbols-outlined text-[15px]">receipt_long</span>
+            Acuse de Recibo Telemático (CAD)
+          </span>
+          <span class="text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold px-1.5 py-0.5 rounded">
+            Listo para emisión
+          </span>
+        </div>
+        <div class="p-3 bg-white border border-slate-200 rounded font-mono-code text-[11px] text-slate-600 space-y-1">
+          <div class="text-slate-900 font-bold">RECIBO: CAD-2026-PUN-08492</div>
+          <div>EMISOR: GOBIERNO REGIONAL PUNO / DRTC</div>
+          <div>DESTINATARIO: {{ numeroDocumento }}</div>
+          <div>EXPEDIENTE: {{ codigoExpediente }}</div>
+        </div>
+      </div>
+
+      <!-- Card D: Acciones de Despacho Telemático -->
+      <div class="bg-white rounded-lg border border-slate-200 p-4 shadow-sm flex flex-col gap-3">
+        <div class="text-xs font-bold text-slate-700 uppercase">
+          Acciones de Despacho Telemático
+        </div>
+
+        <!-- Botón Principal: Depositar en Casilla Electrónica MTC -->
+        <button type="button" (click)="depositarEnCasilla()" [disabled]="service.loading()"
+                class="w-full h-11 bg-blue-900 hover:bg-slate-900 text-white rounded text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-sm active:scale-[0.99] border border-blue-900">
           @if (service.loading()) {
-            Guardando en MinIO S3 y PostgreSQL...
+            <span class="animate-spin material-symbols-outlined text-[18px]">refresh</span>
+            <span>Procesando Depósito en MTC...</span>
           } @else {
-            💾 Registrar Notificación (Borrador)
+            <span class="material-symbols-outlined text-[18px]">send</span>
+            <span>Depositar en Casilla Electrónica MTC</span>
           }
         </button>
+
+        <!-- Botones Secundarios: Firmar y Borrador -->
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" (click)="firmarDigitalmente()" [disabled]="service.loading()"
+                  class="h-9 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 rounded text-xs font-bold flex items-center justify-center gap-1.5 transition-colors">
+            <span class="material-symbols-outlined text-[16px] text-blue-900">token</span>
+            <span>Firmar Token</span>
+          </button>
+          <button type="button" (click)="guardarBorrador()" [disabled]="service.loading()"
+                  class="h-9 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 rounded text-xs font-bold flex items-center justify-center gap-1.5 transition-colors">
+            <span class="material-symbols-outlined text-[16px] text-slate-600">save</span>
+            <span>Borrador</span>
+          </button>
+        </div>
+
+        <!-- Aviso Legal Vinculante -->
+        <div class="mt-1 p-2.5 rounded bg-amber-50 border border-amber-200 text-amber-900 text-[11px] leading-tight flex items-start gap-1.5">
+          <span class="material-symbols-outlined text-amber-700 text-[16px] shrink-0 mt-0.5">info</span>
+          <span>
+            <strong>Aviso Legal:</strong> El depósito formal en la Casilla Electrónica surte efectos legales de notificación personal conforme al Artículo 25 del D.S. N° 001-2020-MTC.
+          </span>
+        </div>
       </div>
-    </form>
+    </aside>
   </div>
 </div>

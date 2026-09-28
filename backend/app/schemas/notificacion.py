@@ -77,14 +77,42 @@ class NotificacionResponse(BaseModel):
     estado: EstadoNotificacion
     
     fecha_emision: datetime
-    fecha_firma: Optional[datetime]
-    fecha_deposito: Optional[datetime]
-    fecha_notificacion_efectiva: Optional[datetime]
+    fecha_firma: Optional[datetime] = None
+    fecha_deposito: Optional[datetime] = None
+    fecha_lectura: Optional[datetime] = None
+    fecha_notificacion_efectiva: Optional[datetime] = None
+    fecha_limite_gracia_5dias: Optional[datetime] = None
+    fecha_inicio_computo: Optional[datetime] = None
+    fecha_vencimiento_plazo: Optional[datetime] = None
+
+    # Parámetros y cómputo procesal
+    plazo_dias_habiles: int = 15
+    tipo_procedimiento: Optional[str] = "Procedimiento Administrativo Sancionador"
+    origen_notificacion_efectiva: Optional[str] = None
+    estado_plazo: Optional[str] = "EN_ESPERA_LECTURA"
+    dias_habiles_restantes: Optional[int] = None
+    porcentaje_transcurrido: float = 0.0
     
-    id_transaccion_mtc: Optional[str]
+    id_transaccion_mtc: Optional[str] = None
     
     casilla: Optional[CasillaResponse] = None
     documentos: List[DocumentoResponse] = []
     acuses: List[AcuseResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class DashboardKpis(BaseModel):
+    total_notificaciones: int = 0
+    en_plazo_ordinario: int = 0
+    alerta_por_vencer_48h: int = 0
+    plazo_vencido: int = 0
+    notificadas_ficcion_legal: int = 0
+    en_gracia_lectura: int = 0
+
+
+class DashboardAlertasResponse(BaseModel):
+    kpis: DashboardKpis
+    notificaciones: List[NotificacionResponse]
+    hora_oficial_peru: datetime
+

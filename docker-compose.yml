@@ -22,7 +22,7 @@ services:
 
   # Almacenamiento de Objetos S3-compatible: MinIO para PDFs y Acuses
   minio:
-    image: minio/minio:latest
+    image: cgr.dev/chainguard/minio:latest
     container_name: casillas_minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
@@ -35,25 +35,34 @@ services:
     volumes:
       - minio_data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 15s
+      test: ["CMD", "/bin/bash", "-c", "echo > /dev/tcp/127.0.0.1/9000"]
+      interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 5
 
   # Auto-configurador de Buckets de MinIO (Crea el bucket oficial al iniciar)
   minio-init:
-    image: minio/mc:latest
+    image: cgr.dev/chainguard/minio:latest
     container_name: casillas_minio_init
     depends_on:
       minio:
         condition: service_healthy
-    entrypoint: >
-      /bin/sh -c "
-      /usr/bin/mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin123};
-      /usr/bin/mc mb --ignore-existing local/${MINIO_BUCKET_NAME:-casillas-notificaciones};
-      /usr/bin/mc anonymous set download local/${MINIO_BUCKET_NAME:-casillas-notificaciones};
-      exit 0;
-      "
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME:-casillas-notificaciones}
+    entrypoint:
+      - /bin/bash
+      - -c
+      - >
+        until mc alias set local http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"; do
+          echo "Esperando que MinIO responda...";
+          sleep 2;
+        done;
+        mc mb --ignore-existing local/"$${MINIO_BUCKET_NAME}";
+        mc anonymous set download local/"$${MINIO_BUCKET_NAME}";
+        echo "Bucket de Casillas MTC Puno inicializado con éxito.";
+        exit 0;
 
   # Redis para broker de tareas de background, locks y cache de tokens MTC
   redis:
@@ -104,6 +113,18 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+
+  # Frontend: Angular 22 servido con Nginx
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: casillas_frontend
+    restart: unless-stopped
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
