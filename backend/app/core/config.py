@@ -45,11 +45,15 @@ class Settings(BaseSettings):
     REDIS_DB: int = 0
 
     # API Casillas Electrónicas Oficial MTC (Oficina de Desarrollo Tecnológico y Digital)
-    MTC_BASE_URL: str = "https://dvwscasilla.mtc.gob.pe/ms-notific/v2/servicios-publicos"
+    MTC_BASE_URL: str = "https://wscasilla.mtc.gob.pe/ms-notific/v2/servicios-publicos"
     MTC_CLIENT_ID: str = "e8c61edc-f33b-4b64-b241-a2bc85c73402"
     MTC_CLIENT_SECRET: str = "wqetekyaQHPK3QwAksSKuNofH0Cp5kIzBwht8lC3VC6XdRTjTZysTEwJEfAGCyWi0FSGDUPXEAMl6dTBli9tBqrStLTmh8fj3b7whBaSUnHGvE6LYTIUuMgjjphqeiqJ"
     MTC_GRANT_TYPE: str = "authorization_code"
     MTC_POLLING_INTERVAL_SECONDS: int = 180
+
+    # API Casillas Electrónicas Oficial DRTC Puno (Node-RED)
+    MTC_DRTC_BASE_URL: str = "https://mtc.transportespuno.gob.pe/api/v2"
+    MTC_DRTC_API_KEY: str = "topSecret123"
 
 
 settings = Settings()

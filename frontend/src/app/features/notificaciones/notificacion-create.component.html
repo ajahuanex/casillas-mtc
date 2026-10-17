@@ -190,6 +190,92 @@
         </div>
       </div>
 
+      <!-- SECCIÓN INTERMEDIA: Plantilla Oficial de Notificación (Prefijo P-*) -->
+      <div class="bg-gradient-to-r from-blue-50/60 to-slate-50 dark:from-slate-800/80 dark:to-slate-900 rounded-xl border border-blue-200 dark:border-slate-800 p-4 shadow-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-blue-200/60 dark:border-slate-800">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-blue-800 dark:text-blue-400 text-[20px]">description</span>
+            <div>
+              <h3 class="text-xs font-bold uppercase tracking-wide text-slate-900 dark:text-white">
+                Plantilla Oficial de Notificación (Catálogo P-*)
+              </h3>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                Seleccione un modelo estandarizado para autocompletar plazos, asunto y base legal según el D.S. 001-2020-MTC.
+              </p>
+            </div>
+          </div>
+          <a routerLink="/plantillas"
+             class="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 dark:text-blue-400 hover:underline shrink-0">
+            <span class="material-symbols-outlined text-[16px]">open_in_new</span>
+            <span>Ver Catálogo (14)</span>
+          </a>
+        </div>
+
+        <div class="mt-3 grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+          <div class="sm:col-span-8">
+            <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 uppercase mb-1" for="plantilla-select">
+              Modelo de Cédula Preconfigurado:
+            </label>
+            <select id="plantilla-select"
+                    [ngModel]="codigoPlantillaSeleccionada()"
+                    (ngModelChange)="seleccionarPlantilla($event)"
+                    class="w-full text-xs font-mono-code px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-600 focus:outline-hidden">
+              <option value="">-- Redacción manual / Sin plantilla --</option>
+              
+              <optgroup label="FAMILIA A: Fiscalizadoras / PAS (5 a 15 días hábiles)">
+                @for (p of plantillas(); track p.codigo) {
+                  @if (p.categoria === 'FISCALIZADORA') {
+                    <option [value]="p.codigo">{{ p.codigo }} - {{ p.nombre }} ({{ p.plazo_dias_defecto }}d)</option>
+                  }
+                }
+              </optgroup>
+
+              <optgroup label="FAMILIA B: Administrativas Ordinarias (Autorizaciones, TUC)">
+                @for (p of plantillas(); track p.codigo) {
+                  @if (p.categoria === 'ADMINISTRATIVA') {
+                    <option [value]="p.codigo">{{ p.codigo }} - {{ p.nombre }}</option>
+                  }
+                }
+              </optgroup>
+
+              <optgroup label="FAMILIA C: Impugnaciones y Firmeza">
+                @for (p of plantillas(); track p.codigo) {
+                  @if (p.categoria === 'IMPUGNATORIA') {
+                    <option [value]="p.codigo">{{ p.codigo }} - {{ p.nombre }}</option>
+                  }
+                }
+              </optgroup>
+
+              <optgroup label="FAMILIA D: Ejecución Coactiva (Ley 26979)">
+                @for (p of plantillas(); track p.codigo) {
+                  @if (p.categoria === 'COACTIVA') {
+                    <option [value]="p.codigo">{{ p.codigo }} - {{ p.nombre }} (7d hábiles)</option>
+                  }
+                }
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="sm:col-span-4 flex flex-col justify-center">
+            @if (plantillaActiva(); as activa) {
+              <div class="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 text-[11px] space-y-0.5">
+                <div class="font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[15px]">check_circle</span>
+                  <span>{{ activa.codigo }} Aplicada</span>
+                </div>
+                <div class="text-slate-600 dark:text-slate-400 truncate">
+                  Plazo: <strong class="font-mono-code">{{ activa.plazo_dias_defecto }}d hábiles</strong>
+                </div>
+              </div>
+            } @else {
+              <div class="text-[11px] text-slate-400 italic">
+                Seleccione una plantilla para autocompletar metadatos.
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
       <!-- SECCIÓN 2: Metadatos del Acto Administrativo y Notificación Oficial -->
       <div class="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
         <div class="border-t-2 border-blue-900 bg-slate-50 px-5 py-3 flex items-center justify-between border-b border-slate-200">
@@ -442,7 +528,7 @@
           </div>
           <div class="flex items-center justify-between">
             <span class="text-slate-500">Servidor MTC:</span>
-            <span class="font-mono-code text-[11px] text-slate-800 font-semibold">dvwscasilla.mtc.gob.pe</span>
+            <span class="font-mono-code text-[11px] text-slate-800 font-semibold">wscasilla.mtc.gob.pe</span>
           </div>
           <div class="flex items-center justify-between">
             <span class="text-slate-500">Certificado Operador:</span>

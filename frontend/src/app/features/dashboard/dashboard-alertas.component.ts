@@ -75,8 +75,7 @@ export class DashboardAlertasComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarDashboard();
-    // Consulta inicial rápida de ejemplo
-    this.consultarCasillaMTC();
+    // La consulta de casilla se realiza únicamente al presionar el botón de consulta explícito
   }
 
   public cargarDashboard(): void {

@@ -7,7 +7,7 @@ Sistema corporativo de emisión, custodia y no repudio de notificaciones adminis
 ## 🏛️ Especificación Oficial MTC (Oficina de Desarrollo Tecnológico y Digital)
 
 ### Credenciales de Desarrollo (GORE PUNO)
-* **Base URL:** `https://dvwscasilla.mtc.gob.pe/ms-notific/v2/servicios-publicos`
+* **Base URL:** `https://wscasilla.mtc.gob.pe/ms-notific/v2/servicios-publicos`
 * **Entidad Emisora:** Gobierno Regional de Puno (`GORE - PUNO`)
 * **clientId:** `e8c61edc-f33b-4b64-b241-a2bc85c73402`
 * **clientSecret:** `wqetekyaQHPK3QwAksSKuNofH0Cp5kIzBwht8lC3VC6XdRTjTZysTEwJEfAGCyWi0FSGDUPXEAMl6dTBli9tBqrStLTmh8fj3b7whBaSUnHGvE6LYTIUuMgjjphqeiqJ`

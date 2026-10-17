@@ -156,7 +156,7 @@ def generar_resolucion_pdf(
     ))
     story.append(Spacer(1, 6))
     story.append(Paragraph(
-        f"<b>ARTÍCULO SEGUNDO.- NOTIFICAR</b> la presente Resolución Directoral a <b>{administrado_nombre}</b> con {administrado_doc} a través del Sistema de Casillas Electrónicas del MTC (dvwscasilla.mtc.gob.pe), con arreglo al D.S. N° 001-2020-MTC.",
+        f"<b>ARTÍCULO SEGUNDO.- NOTIFICAR</b> la presente Resolución Directoral a <b>{administrado_nombre}</b> con {administrado_doc} a través del Sistema de Casillas Electrónicas del MTC (wscasilla.mtc.gob.pe), con arreglo al D.S. N° 001-2020-MTC.",
         body_style
     ))
     story.append(Spacer(1, 15))
@@ -259,7 +259,7 @@ def generar_constancia_deposito_cad_pdf(
     ))
     story.append(Spacer(1, 15))
 
-    story.append(Paragraph("Sello Telemático MTC | Token Criptográfico Emitido por dvwscasilla.mtc.gob.pe | Custodia Inmutable MinIO S3", ParagraphStyle('F', fontName='Courier', fontSize=7.5, textColor=colors.HexColor('#64748b'))))
+    story.append(Paragraph("Sello Telemático MTC | Token Criptográfico Emitido por wscasilla.mtc.gob.pe | Custodia Inmutable MinIO S3", ParagraphStyle('F', fontName='Courier', fontSize=7.5, textColor=colors.HexColor('#64748b'))))
 
     doc.build(story)
     pdf_bytes = buffer.getvalue()

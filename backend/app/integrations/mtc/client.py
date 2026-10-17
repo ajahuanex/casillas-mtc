@@ -255,7 +255,37 @@ class MTCClient:
                 return response.json()
             except Exception as e:
                 logger.error(f"Error consultando constancias de notificación {id_notificacion}: {e}")
-                raise MTCIntegrationError(f"No se pudieron obtener las constancias de MTC: {str(e)}")
+    async def verificar_estado_casilla_drtc(
+        self,
+        nro_documento: str,
+        cod_tipo_persona: str = "00001",
+        cod_tipo_documento: str = "00002"
+    ) -> Dict[str, Any]:
+        """
+        Consulta al API oficial de Casillas Electrónicas (Node-RED) de la DRTC Puno:
+        GET https://mtc.transportespuno.gob.pe/api/v2/info
+        Header: x-api-key: topSecret123
+        """
+        url = f"{settings.MTC_DRTC_BASE_URL.rstrip('/')}/info"
+        headers = {
+            "x-api-key": settings.MTC_DRTC_API_KEY,
+            "Accept": "application/json"
+        }
+        params = {
+            "codTipoPersona": cod_tipo_persona,
+            "codTipoDocumento": cod_tipo_documento,
+            "nroDocumento": nro_documento
+        }
+
+        async with httpx.AsyncClient(timeout=15.0, verify=False) as client:
+            try:
+                response = await client.get(url, headers=headers, params=params)
+                response.raise_for_status()
+                return response.json()
+            except Exception as e:
+                logger.warning(f"Error consultando DRTC Puno casilla Node-RED ({nro_documento}): {e}")
+                raise MTCIntegrationError(f"Error consultando casilla DRTC Puno: {str(e)}")
 
 
 mtc_client = MTCClient()
+

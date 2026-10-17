@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Base de Datos Relacional: PostgreSQL con soporte JSONB para respuestas MTC
   postgres:
@@ -102,10 +100,11 @@ services:
       MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME:-casillas-notificaciones}
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      MTC_BASE_URL: ${MTC_BASE_URL:-https://api-casilla-testing.mtc.gob.pe}
+      MTC_BASE_URL: ${MTC_BASE_URL:-https://wscasilla.mtc.gob.pe/ms-notific/v2/servicios-publicos}
       MTC_CLIENT_ID: ${MTC_CLIENT_ID}
       MTC_CLIENT_SECRET: ${MTC_CLIENT_SECRET}
-      MTC_API_KEY: ${MTC_API_KEY}
+      MTC_DRTC_BASE_URL: ${MTC_DRTC_BASE_URL:-https://mtc.transportespuno.gob.pe/api/v2}
+      MTC_DRTC_API_KEY: ${MTC_DRTC_API_KEY:-topSecret123}
     volumes:
       - ./backend:/app
     depends_on:

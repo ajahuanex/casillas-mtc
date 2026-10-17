@@ -113,25 +113,52 @@ async def verificar_casilla(
             tipo_documento = tipo_documento or "00002"
 
     try:
-        resultado = await mtc_client.verificar_estado_casilla(
-            nro_documento=doc_clean,
-            cod_tipo_persona=tipo_persona,
-            cod_tipo_documento=tipo_documento
-        )
-        return {
-            "success": True,
-            "numero_documento": doc_clean,
-            "tipo_persona": tipo_persona,
-            "tipo_documento": tipo_documento,
-            "tiene_casilla": True,
-            "codigo_casilla": resultado.get("data", {}).get("codigoCasilla", f"CAS-PUNO-{doc_clean}"),
-            "estado_casilla": resultado.get("data", {}).get("estadoCasilla", "ACTIVA"),
-            "razon_social": resultado.get("data", {}).get("razonSocial"),
-            "mensaje": resultado.get("message", "Casilla electrónica verificada en MTC."),
-            "valido_para_notificar": True,
-            "domicilio_telematico_valido": True,
-            "normativa_aplicable": "D.S. N° 001-2020-MTC Art. 4 y Art. 11"
-        }
+        try:
+            # 1. Intentar con el API oficial de Casillas DRTC Puno (Node-RED)
+            resultado_drtc = await mtc_client.verificar_estado_casilla_drtc(
+                nro_documento=doc_clean,
+                cod_tipo_persona=tipo_persona,
+                cod_tipo_documento=tipo_documento
+            )
+            data_info = resultado_drtc.get("info", {})
+            data_sub = data_info.get("data", {})
+            activo = data_sub.get("activo", True)
+
+            return {
+                "success": data_info.get("success", True),
+                "numero_documento": doc_clean,
+                "tipo_persona": tipo_persona,
+                "tipo_documento": tipo_documento,
+                "tiene_casilla": activo,
+                "codigo_casilla": data_sub.get("codigoCasilla", f"CAS-PUNO-{doc_clean}"),
+                "estado_casilla": "ACTIVA" if activo else "INACTIVA",
+                "razon_social": data_sub.get("nombreCompleto") or data_sub.get("razonSocial"),
+                "mensaje": data_info.get("message", "Consulta realizada con éxito en Casillas DRTC Puno"),
+                "valido_para_notificar": True,
+                "domicilio_telematico_valido": True,
+                "normativa_aplicable": "D.S. N° 001-2020-MTC Art. 4 y Art. 11"
+            }
+        except Exception as drtc_err:
+            # 2. Intentar servicio nacional MTC
+            resultado = await mtc_client.verificar_estado_casilla(
+                nro_documento=doc_clean,
+                cod_tipo_persona=tipo_persona,
+                cod_tipo_documento=tipo_documento
+            )
+            return {
+                "success": True,
+                "numero_documento": doc_clean,
+                "tipo_persona": tipo_persona,
+                "tipo_documento": tipo_documento,
+                "tiene_casilla": True,
+                "codigo_casilla": resultado.get("data", {}).get("codigoCasilla", f"CAS-PUNO-{doc_clean}"),
+                "estado_casilla": resultado.get("data", {}).get("estadoCasilla", "ACTIVA"),
+                "razon_social": resultado.get("data", {}).get("razonSocial"),
+                "mensaje": resultado.get("message", "Casilla electrónica verificada en MTC."),
+                "valido_para_notificar": True,
+                "domicilio_telematico_valido": True,
+                "normativa_aplicable": "D.S. N° 001-2020-MTC Art. 4 y Art. 11"
+            }
     except Exception as e:
         # Modo de fallback / interoperabilidad simulada para desarrollo o administrados registrados localmente
         result_admin = await db.execute(

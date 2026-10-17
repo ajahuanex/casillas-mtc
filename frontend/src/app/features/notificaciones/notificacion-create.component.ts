@@ -1,9 +1,11 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { NotificacionesService } from '../../core/services/notificaciones.service';
+import { CasillaService } from '../../core/services/casilla.service';
 import { GeminiAiService } from '../../core/services/gemini-ai.service';
+import { PlantillasService, Plantilla } from '../../core/services/plantillas.service';
 import { TipoDocumentoIdentidad } from '../../core/models/notificacion.model';
 
 @Component({
@@ -12,10 +14,18 @@ import { TipoDocumentoIdentidad } from '../../core/models/notificacion.model';
   imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './notificacion-create.component.html'
 })
-export class NotificacionCreateComponent {
+export class NotificacionCreateComponent implements OnInit {
   public service = inject(NotificacionesService);
+  public casillaService = inject(CasillaService);
   public gemini = inject(GeminiAiService);
+  public plantillasService = inject(PlantillasService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
+
+  // Catálogo de Plantillas Oficiales P-*
+  public plantillas = signal<Plantilla[]>([]);
+  public plantillaActiva = signal<Plantilla | null>(null);
+  public codigoPlantillaSeleccionada = signal<string>('');
 
   // Formulario y Metadatos del Acto Administrativo
   tipoPersona: string = '00002'; // '00002': Persona Jurídica, '00001': Natural, '00004': Extranjera
@@ -33,7 +43,8 @@ export class NotificacionCreateComponent {
   asunto: string = 'Notificación de Resolución Directoral sobre otorgamiento de Habilitación Vehicular y TUC Flota 2026 - Ruta Puno-Juliaca-Desaguadero';
   descripcion: string = 'Se resuelve otorgar la Habilitación Vehicular a favor de la empresa administrada para las unidades de placa Z4U-960, Z2B-954 y Z5C-881, emitiéndose las correspondientes Tarjetas Únicas de Circulación (TUC).';
 
-  // Verificación en Tiempo Real contra MTC (dvwscasilla.mtc.gob.pe)
+
+  // Verificación en Tiempo Real contra MTC (wscasilla.mtc.gob.pe)
   casillaVerificada = signal<boolean>(true);
   verificandoCasilla = signal<boolean>(false);
   mensajeCasilla = signal<string>('Casilla Electrónica MTC Activa y Habilitada');
@@ -55,6 +66,53 @@ export class NotificacionCreateComponent {
   // Sugerencias Gemini AI
   sugerenciasIa = signal<string[]>([]);
   iaActiva = signal<boolean>(false);
+
+  ngOnInit(): void {
+    // Cargar catálogo de plantillas oficiales P-*
+    this.plantillasService.obtenerPlantillas().subscribe({
+      next: (data) => {
+        this.plantillas.set(data);
+        // Si hay una plantilla en el query param (ej. /nueva?plantilla=P-PAS-01)
+        const paramPlantilla = this.route.snapshot.queryParams['plantilla'];
+        if (paramPlantilla) {
+          this.seleccionarPlantilla(paramPlantilla);
+        }
+      }
+    });
+  }
+
+  seleccionarPlantilla(codigo: string): void {
+    if (!codigo) {
+      this.plantillaActiva.set(null);
+      this.codigoPlantillaSeleccionada.set('');
+      return;
+    }
+
+    const p = this.plantillas().find(x => x.codigo === codigo);
+    if (p) {
+      this.plantillaActiva.set(p);
+      this.codigoPlantillaSeleccionada.set(p.codigo);
+      this.asunto = p.asunto_predeterminado
+        .replace('{{NUMERO_ACTA}}', '00482-2026')
+        .replace('{{NUMERO_PAPELETA}}', 'PIT-2026-9182')
+        .replace('{{PLACA_RODAJE}}', 'Z4B-961')
+        .replace('{{NUMERO_EXPEDIENTE}}', this.codigoExpediente);
+      
+      this.categoriaTramite = p.tipo_procedimiento;
+      this.plazoDias = p.plazo_dias_defecto;
+      this.plazoRecursoDias = p.plazo_dias_defecto > 0 ? p.plazo_dias_defecto : 15;
+      
+      // Categorías MTC
+      if (p.categoria === 'FISCALIZADORA') {
+        this.idCategoria = 2; // Sanciones
+      } else if (p.categoria === 'ADMINISTRATIVA') {
+        this.idCategoria = 5; // Habilitaciones
+      } else {
+        this.idCategoria = 1;
+      }
+    }
+  }
+
 
   async onFileSelected(event: any): Promise<void> {
     const file = event.target.files[0];
@@ -88,7 +146,7 @@ export class NotificacionCreateComponent {
     this.verificandoCasilla.set(true);
     const codTipoDoc = this.tipoDocumento === 'DNI' ? '00002' : '00001';
 
-    this.service.verificarCasilla(this.numeroDocumento, this.tipoPersona, codTipoDoc).subscribe({
+    this.casillaService.verificarEstado(this.tipoPersona, codTipoDoc, this.numeroDocumento).subscribe({
       next: (res) => {
         this.verificandoCasilla.set(false);
         const info = res.info;

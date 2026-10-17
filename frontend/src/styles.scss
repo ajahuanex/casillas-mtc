@@ -65,6 +65,10 @@ body {
 
   &.btn-primary {
     @apply bg-blue-900 text-white hover:bg-slate-900 shadow-sm active:scale-[0.99];
+    color: #ffffff !important;
+    * {
+      color: #ffffff !important;
+    }
   }
 
   &.btn-accent {
@@ -86,4 +90,39 @@ body {
   &.btn-sm {
     @apply px-2.5 py-1 text-xs;
   }
+}
+
+/* Modo Oscuro GovTech Completo */
+html.dark {
+  --bg-page: #0b1329;
+  --card-bg: #111c38;
+  --border-color: #1e293b;
+  color-scheme: dark;
+
+  body {
+    background-color: #0b1329;
+    color: #f1f5f9;
+  }
+
+  .card {
+    background-color: #111c38;
+    border-color: #1e293b;
+    color: #f1f5f9;
+  }
+
+  .btn-outline {
+    background-color: #111c38;
+    border-color: #334155;
+    color: #e2e8f0;
+    &:hover {
+      background-color: #1e293b;
+    }
+  }
+
+  .badge-borrador { background-color: #1e293b; color: #cbd5e1; border-color: #334155; }
+  .badge-pendiente { background-color: rgba(217, 119, 6, 0.18); color: #fde68a; border-color: rgba(217, 119, 6, 0.4); }
+  .badge-firmado { background-color: rgba(99, 102, 241, 0.18); color: #c7d2fe; border-color: rgba(99, 102, 241, 0.4); }
+  .badge-depositado { background-color: rgba(14, 165, 233, 0.18); color: #bae6fd; border-color: rgba(14, 165, 233, 0.4); }
+  .badge-leido { background-color: rgba(16, 185, 129, 0.18); color: #a7f3d0; border-color: rgba(16, 185, 129, 0.4); }
+  .badge-error { background-color: rgba(244, 63, 94, 0.18); color: #fecdd3; border-color: rgba(244, 63, 94, 0.4); }
 }

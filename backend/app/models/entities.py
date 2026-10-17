@@ -143,3 +143,29 @@ class NotificacionBitacora(Base, TimestampMixin):
     detalles: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
 
     notificacion: Mapped["Notificacion"] = relationship(back_populates="bitacoras")
+
+
+class PlantillaNotificacion(Base, TimestampMixin):
+    """Plantilla legal estandarizada para emisión de notificaciones telemáticas MTC."""
+    __tablename__ = "plantillas_notificacion"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    codigo: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False) # ej. P-PAS-01
+    nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    categoria: Mapped[str] = mapped_column(String(50), index=True, nullable=False) # FISCALIZADORA, ADMINISTRATIVA, IMPUGNATORIA, COACTIVA
+    tipo_procedimiento: Mapped[str] = mapped_column(String(150), nullable=False)
+    base_legal: Mapped[str] = mapped_column(Text, nullable=False)
+    asunto_predeterminado: Mapped[str] = mapped_column(String(300), nullable=False)
+    plazo_dias_defecto: Mapped[int] = mapped_column(Integer, default=5, nullable=False)
+    tipo_plazo: Mapped[str] = mapped_column(String(30), default="DIAS_HABILES", nullable=False) # DIAS_HABILES / DIAS_CALENDARIO
+    
+    # Motor de Contenido
+    cuerpo_html_template: Mapped[str] = mapped_column(Text, nullable=False)
+    variables_requeridas: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
+    
+    # Metadatos Institucionales
+    organo_emisor_defecto: Mapped[str] = mapped_column(String(200), default="Dirección Regional de Transportes y Comunicaciones - DRTC Puno", nullable=False)
+    requiere_firma_digital: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    activo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+

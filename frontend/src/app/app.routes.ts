@@ -30,9 +30,15 @@ export const routes: Routes = [
     component: NotificacionCreateComponent,
     title: 'Nueva Emisión y Validación - Casilla MTC'
   },
+  {
+    path: 'plantillas',
+    loadComponent: () => import('./features/plantillas/plantillas-catalogo.component').then(m => m.PlantillasCatalogoComponent),
+    title: 'Catálogo de Plantillas Oficiales P-* - Casilla MTC'
+  },
 
   {
     path: '**',
     redirectTo: ''
   }
 ];
+

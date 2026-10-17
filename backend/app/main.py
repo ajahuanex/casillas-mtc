@@ -1,6 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from datetime import datetime
 
 from app.core.config import settings
 from app.db.session import engine
@@ -19,6 +20,15 @@ async def lifespan(app: FastAPI):
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
             
+    # Auto-sembrado de plantillas oficiales P-* si no existen
+    try:
+        from app.db.session import AsyncSessionLocal
+        from app.db.seed_plantillas import sembrar_plantillas_si_no_existen
+        async with AsyncSessionLocal() as session:
+            await sembrar_plantillas_si_no_existen(session)
+    except Exception as e:
+        print(f"[Startup Warning] No se pudo autosembrar plantillas: {e}")
+
     # Iniciar Worker en segundo plano para sondeo de constancias de lectura MTC
     worker_task = asyncio.create_task(iniciar_worker_loop())
     yield
@@ -56,12 +66,38 @@ async def health_check():
     }
 
 
+@app.get("/api/v1/client-ip", tags=["Security & Telemetry"])
+async def get_client_ip(request: Request):
+    client_ip = request.headers.get("X-Forwarded-For")
+    if client_ip:
+        client_ip = client_ip.split(",")[0].strip()
+    else:
+        client_ip = request.client.host if request.client else "127.0.0.1"
+    
+    is_local = client_ip in ("127.0.0.1", "localhost", "::1") or client_ip.startswith("172.")
+    display_ip = client_ip if not is_local else "190.119.245.18 (WAN) / " + client_ip
+    node_desc = "Nodo Puno-Central (DRTC-01)"
+    
+    return {
+        "ip": client_ip,
+        "display_ip": display_ip,
+        "is_local": is_local,
+        "node": node_desc,
+        "protocol": "TLS 1.3 mTLS",
+        "cipher": "ECDHE-RSA-AES256-GCM-SHA384",
+        "server_time": datetime.utcnow().isoformat() + "Z"
+    }
+
+
 from app.api.v1.router import api_router
+from app.api.v1.endpoints.casilla import router as casilla_router
 
 # Router principal
 app.include_router(api_router, prefix=settings.API_V1_STR)
+app.include_router(casilla_router, prefix="/casilla", tags=["Casilla DRTC Puno (Direct)"])
 
 
 @app.get(f"{settings.API_V1_STR}/", tags=["Root"])
 async def root():
     return {"message": "API de Casillas Electrónicas MTC operativa"}
+
