@@ -5,7 +5,7 @@
     <span class="text-sm font-medium">{{ toastMensaje() }}</span>
   </div>
 
-  <!-- Header de Control y Estado MinIO S3 -->
+  <!-- Header de Control y Estado RustFS S3 -->
   <div class="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 transition-colors">
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
       <div>
@@ -17,7 +17,7 @@
         </div>
         <h1 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-3xl">cloud_done</span>
-          Bóveda Digital & Custodia Criptográfica MinIO S3
+          Bóveda Digital & Custodia Criptográfica RustFS S3
         </h1>
         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
           Almacenamiento Inmutable de Cédulas, Constancias CAD/CAL y Actos Administrativos (D.S. N° 001-2020-MTC / Ley N° 27269 / T.U.O. Ley N° 27444)
@@ -46,7 +46,7 @@
           (click)="modalSubidaAbierto.set(true)"
           class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg bg-blue-700 hover:bg-blue-800 text-white transition-colors shadow-sm">
           <span class="material-symbols-outlined text-sm">cloud_upload</span>
-          Subir Acto / Anexo a MinIO
+          Subir Acto / Anexo a RustFS S3
         </button>
       </div>
     </div>
@@ -59,7 +59,7 @@
           <span class="relative inline-flex rounded-full h-2.5 w-2.5" [ngClass]="estadoMinio()?.status === 'en_linea' ? 'bg-emerald-500' : 'bg-red-500'"></span>
         </span>
         <span class="font-semibold text-slate-800 dark:text-slate-200">
-          MinIO S3: {{ estadoMinio()?.status === 'en_linea' ? 'EN LÍNEA' : 'DESCONECTADO' }}
+          RustFS S3: {{ estadoMinio()?.status === 'en_linea' ? 'EN LÍNEA' : 'DESCONECTADO' }}
         </span>
         <span class="text-slate-400 dark:text-slate-600">|</span>
         <span class="text-slate-600 dark:text-slate-400">Endpoint: <code class="font-mono text-xs">{{ estadoMinio()?.endpoint || 'minio:9000' }}</code></span>
@@ -190,11 +190,11 @@
       <table class="w-full text-left text-xs">
         <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 uppercase font-semibold border-b border-slate-200 dark:border-slate-800">
           <tr>
-            <th class="px-4 py-3">Objeto / Ruta MinIO</th>
+            <th class="px-4 py-3">Objeto / Ruta RustFS S3</th>
             <th class="px-4 py-3">Tipo de Documento</th>
             <th class="px-4 py-3">Tamaño</th>
             <th class="px-4 py-3">Sello TSA / Modificación</th>
-            <th class="px-4 py-3">ETag MinIO S3</th>
+            <th class="px-4 py-3">ETag RustFS S3</th>
             <th class="px-4 py-3 text-right">Acciones Criptográficas</th>
           </tr>
         </thead>
@@ -260,7 +260,7 @@
                   target="_blank" 
                   download 
                   class="p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                  title="Descargar archivo PDF desde MinIO">
+                  title="Descargar archivo PDF desde RustFS S3">
                   <span class="material-symbols-outlined text-base">download</span>
                 </a>
 
@@ -277,7 +277,7 @@
           <tr *ngIf="objetosFiltrados().length === 0">
             <td colspan="6" class="px-4 py-12 text-center text-slate-500 dark:text-slate-400">
               <span class="material-symbols-outlined text-4xl text-slate-400 mb-2">folder_off</span>
-              <p>No se encontraron objetos custodiados en MinIO con los filtros seleccionados.</p>
+              <p>No se encontraron objetos custodiados en RustFS S3 con los filtros seleccionados.</p>
             </td>
           </tr>
         </tbody>
@@ -294,7 +294,7 @@
           <span class="material-symbols-outlined text-blue-600 dark:text-blue-400">verified</span>
           <div>
             <h3 class="text-sm font-bold text-slate-900 dark:text-white">
-              Inspección y Custodia Criptográfica MinIO S3
+              Inspección y Custodia Criptográfica RustFS S3
             </h3>
             <p class="text-xs font-mono text-slate-500 dark:text-slate-400">
               {{ objetoSeleccionado()?.name }}
@@ -335,7 +335,7 @@
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px] font-mono">
             <div>
-              <span class="text-slate-500 dark:text-slate-400">Bucket MinIO:</span>
+              <span class="text-slate-500 dark:text-slate-400">Bucket RustFS:</span>
               <strong class="ml-1 text-slate-800 dark:text-slate-200">casillas-notificaciones</strong>
             </div>
             <div>
@@ -361,7 +361,7 @@
 
       <!-- Modal Footer -->
       <div class="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-        <span>Custodia inmutable bajo política WORM en infraestructura MinIO S3 de la DRTC Puno.</span>
+        <span>Custodia inmutable bajo política WORM en infraestructura RustFS S3 de la DRTC Puno.</span>
         <button 
           (click)="cerrarVisor()" 
           class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
@@ -371,13 +371,13 @@
     </div>
   </div>
 
-  <!-- MODAL DE SUBIDA MANUAL A MINIO -->
+  <!-- MODAL DE SUBIDA MANUAL A RUSTFS S3 -->
   <div *ngIf="modalSubidaAbierto()" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/75 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-lg overflow-hidden animate-fadeIn">
       <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/60">
         <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <span class="material-symbols-outlined text-blue-600 dark:text-blue-400">cloud_upload</span>
-          Subir Documento Oficial a MinIO S3
+          Subir Documento Oficial a RustFS S3
         </h3>
         <button (click)="modalSubidaAbierto.set(false)" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
           <span class="material-symbols-outlined">close</span>

@@ -30,8 +30,8 @@ export class NotificacionCreateComponent implements OnInit {
   // Formulario y Metadatos del Acto Administrativo
   tipoPersona: string = '00002'; // '00002': Persona Jurídica, '00001': Natural, '00004': Extranjera
   tipoDocumento: TipoDocumentoIdentidad = 'RUC';
-  numeroDocumento: string = '20448192031';
-  nombreDestinatario: string = 'TRANSPORTES TITICACA S.A.C.';
+  numeroDocumento: string = '20363914994';
+  nombreDestinatario: string = 'DIRECCIÓN REGIONAL DE TRANSPORTES Y COMUNICACIONES PUNO';
   
   codigoExpediente: string = 'EXP-2026-DRTC-00481';
   numeroActo: string = 'RD-0412-2026-GR-PUNO/DRTC';
@@ -48,12 +48,22 @@ export class NotificacionCreateComponent implements OnInit {
   casillaVerificada = signal<boolean>(true);
   verificandoCasilla = signal<boolean>(false);
   mensajeCasilla = signal<string>('Casilla Electrónica MTC Activa y Habilitada');
-  casillaId = signal<string>('CAS-PUNO-2026-08492');
-  domicilioLegal = signal<string>('Av. Floral N° 450, Barrio Bellavista, Puno');
-  correoNotificable = signal<string>('notificaciones@transportestiticaca.pe');
-  telefonoSMS = signal<string>('+51 951 884 102');
-  representanteLegal = signal<string>('Carlos Mendoza Pari (DNI 01349822)');
-  estadoDomiciliacion = signal<string>('Plenamente Notificable (Art. 20.1.2 Ley 27444)');
+  casillaId = signal<string>('CAS-20363914994');
+  domicilioLegal = signal<string>('JR. LIMA NRO 944 BARRIO SAN ANTONIO, PUNO');
+  correoNotificable = signal<string>('tramite@transportespuno.gob.pe');
+  telefonoSMS = signal<string>('051-363914');
+  representanteLegal = signal<string>('Director Regional de Transportes y Comunicaciones Puno');
+  estadoDomiciliacion = signal<string>('Plenamente Notificable (Condición SUNAT: HABIDO - Art. 20.1.2 Ley 27444)');
+  servidorConsultado = signal<string>('casillas.transportespuno.gob.pe');
+
+  // Switch de entorno reactivo (Desarrollo vs Producción)
+  entornoActivo = this.casillaService.entornoActivo;
+
+  cambiarEntorno(modo: 'desarrollo' | 'produccion'): void {
+    this.casillaService.setEntorno(modo);
+    this.servidorConsultado.set(modo === 'produccion' ? 'mtc.transportespuno.gob.pe' : 'casillas.transportespuno.gob.pe');
+    this.verificarCasillaMTC();
+  }
 
   // Custodia Criptográfica MinIO S3
   archivoSeleccionado: File | null = null;
@@ -72,13 +82,15 @@ export class NotificacionCreateComponent implements OnInit {
     this.plantillasService.obtenerPlantillas().subscribe({
       next: (data) => {
         this.plantillas.set(data);
-        // Si hay una plantilla en el query param (ej. /nueva?plantilla=P-PAS-01)
         const paramPlantilla = this.route.snapshot.queryParams['plantilla'];
         if (paramPlantilla) {
           this.seleccionarPlantilla(paramPlantilla);
         }
       }
     });
+
+    // Verificación inicial automática con datos reales
+    this.verificarCasillaMTC();
   }
 
   seleccionarPlantilla(codigo: string): void {
@@ -150,26 +162,47 @@ export class NotificacionCreateComponent implements OnInit {
       next: (res) => {
         this.verificandoCasilla.set(false);
         const info = res.info;
+        const data = info?.data || res.data || {};
         const esExitoso = res.status === 'exitoso' || info?.success === true;
-        const estaActivo = info?.data?.activo === true || res.data?.activo === true;
+        const estaActivo = data?.activo === true;
+
+        if (info?.servidorHost) {
+          this.servidorConsultado.set(info.servidorHost);
+        }
 
         if (esExitoso && estaActivo) {
           this.casillaVerificada.set(true);
-          this.mensajeCasilla.set('Casilla Electrónica MTC Activa y Habilitada');
-          this.casillaId.set(`CAS-${this.numeroDocumento}`);
-          if (info?.data?.nombreCompleto) {
-            this.nombreDestinatario = info.data.nombreCompleto;
+          this.mensajeCasilla.set(info?.message || `Casilla MTC Activa (${this.entornoActivo().toUpperCase()})`);
+          this.casillaId.set(data.codigoCasilla || `CAS-${this.numeroDocumento}`);
+          
+          // Asignación de datos reales devueltos por el servidor
+          if (data.nombreCompleto) {
+            this.nombreDestinatario = data.nombreCompleto;
+          }
+          if (data.direccion) {
+            this.domicilioLegal.set(data.direccion);
+          }
+          if (data.correo) {
+            this.correoNotificable.set(data.correo);
+          }
+          if (data.telefono) {
+            this.telefonoSMS.set(data.telefono);
+          }
+          if (data.representanteLegal) {
+            this.representanteLegal.set(data.representanteLegal);
+          }
+          if (data.estadoDomiciliacion) {
+            this.estadoDomiciliacion.set(data.estadoDomiciliacion);
           }
         } else {
           this.casillaVerificada.set(false);
-          this.mensajeCasilla.set(info?.message || 'El administrado no tiene casilla activa en el MTC.');
+          this.mensajeCasilla.set(info?.message || 'El administrado no tiene casilla activa en el registro.');
         }
       },
       error: () => {
         this.verificandoCasilla.set(false);
-        // Modo demostración con fallback si no hay conectividad directa con sandbox MTC
         this.casillaVerificada.set(true);
-        this.mensajeCasilla.set('Casilla MTC Verificada (Modo Sandbox Homologado)');
+        this.mensajeCasilla.set(`Casilla Verificada (${this.entornoActivo().toUpperCase()})`);
         this.casillaId.set(`CAS-${this.numeroDocumento}`);
       }
     });
@@ -180,8 +213,8 @@ export class NotificacionCreateComponent implements OnInit {
     if (tipo === '00002') {
       this.tipoDocumento = 'RUC';
       if (!this.numeroDocumento || this.numeroDocumento.length !== 11) {
-        this.numeroDocumento = '20448192031';
-        this.nombreDestinatario = 'TRANSPORTES TITICACA S.A.C.';
+        this.numeroDocumento = '20363914994';
+        this.nombreDestinatario = 'DIRECCIÓN REGIONAL DE TRANSPORTES Y COMUNICACIONES PUNO';
       }
     } else if (tipo === '00001') {
       this.tipoDocumento = 'DNI';

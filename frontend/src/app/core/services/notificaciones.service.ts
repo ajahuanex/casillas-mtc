@@ -35,10 +35,11 @@ export class NotificacionesService {
     this.notificacionesSignal().filter(n => n.estado === 'LEIDO_NOTIFICADO').length
   );
 
-  verificarCasilla(numeroDocumento: string, tipoPersona?: string, tipoDocumento?: string): Observable<any> {
+  verificarCasilla(numeroDocumento: string, tipoPersona?: string, tipoDocumento?: string, entorno?: string): Observable<any> {
     let params = new HttpParams().set('numero_documento', numeroDocumento);
     if (tipoPersona) params = params.set('tipo_persona', tipoPersona);
     if (tipoDocumento) params = params.set('tipo_documento', tipoDocumento);
+    if (entorno) params = params.set('entorno', entorno);
 
     return this.http.get<any>(`${this.baseUrl}/notificaciones/verificar-casilla`, { params });
   }

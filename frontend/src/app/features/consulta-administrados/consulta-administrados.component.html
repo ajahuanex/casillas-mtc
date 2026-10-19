@@ -1,0 +1,770 @@
+<div class="space-y-6">
+
+  <!-- ========================================================================= -->
+  <!-- 1. HERO HEADER: IDENTIDAD Y ESTADO DEL NODO MTC -->
+  <!-- ========================================================================= -->
+  <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 p-6 sm:p-8 text-white shadow-xl border border-blue-800/50">
+    <div class="absolute -right-16 -top-16 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
+    <div class="absolute right-1/4 -bottom-16 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none"></div>
+
+    <div class="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+      
+      <div class="space-y-2 max-w-2xl">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-200 border border-blue-400/30 backdrop-blur-md">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            wsapiadmcasilla.mtc.gob.pe
+          </span>
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-mono-code bg-indigo-500/20 text-indigo-200 border border-indigo-400/30">
+            <span class="material-symbols-outlined text-[14px]">security</span>
+            Protección Anti-Bloqueo MTC (Máx 2 Reintentos)
+          </span>
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+            D.S. N° 001-2020-MTC
+          </span>
+        </div>
+
+        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+          Consulta Integral de Administrados & Casillas MTC
+        </h1>
+        <p class="text-sm text-slate-300 leading-relaxed">
+          Autenticación dinámica con caché de sesión de 1 hora. El Captcha solo se resuelve una sola vez al iniciar sesión, evitando consultas repetitivas innecesarias ante el portal del MTC.
+        </p>
+      </div>
+
+      <!-- Métricas / Estado de Sesión MTC -->
+      <div class="flex flex-wrap lg:flex-col gap-3 shrink-0">
+        <div class="px-4 py-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-blue-600/50 flex items-center justify-center text-white font-bold">
+            <span class="material-symbols-outlined">badge</span>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase font-mono-code text-slate-300">Operador Registrado</div>
+            <div class="text-xs font-bold text-white">40396522 • J. AJAHUANA</div>
+          </div>
+        </div>
+
+        <!-- Estado de Credenciales de Sesión en el Header -->
+        <div class="px-4 py-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 flex items-center gap-3">
+          @if (sessionStatus()?.activa) {
+            <div class="w-10 h-10 rounded-lg bg-emerald-500/40 text-emerald-300 flex items-center justify-center">
+              <span class="material-symbols-outlined">vpn_key</span>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase font-mono-code text-emerald-300 font-bold flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                Credenciales MTC Activas
+              </div>
+              <div class="text-xs font-bold text-white font-mono-code">
+                Vigencia: ~{{ sessionStatus()?.minutos_restantes }} min
+              </div>
+            </div>
+          } @else {
+            <div class="w-10 h-10 rounded-lg bg-amber-500/40 text-amber-300 flex items-center justify-center">
+              <span class="material-symbols-outlined">lock_clock</span>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase font-mono-code text-amber-300 font-bold">
+                Sesión No Iniciada
+              </div>
+              <div class="text-xs text-slate-200">
+                Requiere Captcha (1 vez cada 1h)
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- BANNER PROMINENTE: ESTADO DE CREDENCIALES TEMPORALES (1 HORA) -->
+  <!-- ========================================================================= -->
+  @if (sessionStatus()?.activa) {
+    <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/80 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+          <span class="material-symbols-outlined text-[22px]">verified</span>
+        </div>
+        <div>
+          <div class="text-xs font-bold text-emerald-900 dark:text-emerald-200 flex items-center gap-2">
+            <span>Credenciales de Sesión MTC Válidas y Activas</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-200 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 font-mono-code">
+              Sin Captcha Requerido
+            </span>
+          </div>
+          <p class="text-xs text-emerald-700 dark:text-emerald-300 leading-relaxed">
+            Las consultas se realizan de forma inmediata reutilizando el token de rol. Le restan aproximadamente <b>{{ sessionStatus()?.minutos_restantes }} minutos</b> antes de requerir un nuevo Captcha.
+          </p>
+        </div>
+      </div>
+
+      <button (click)="cerrarSesionMtc()"
+              class="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-700 text-xs font-bold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-slate-700 transition-colors shrink-0 cursor-pointer self-start sm:self-auto"
+              title="Forzar cierre de sesión para solicitar nuevo Captcha si fuera necesario">
+        <span class="material-symbols-outlined text-[15px] align-middle mr-1">refresh</span>
+        Renovar Sesión
+      </button>
+    </div>
+  } @else {
+    <div class="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+          <span class="material-symbols-outlined text-[22px]">info</span>
+        </div>
+        <div>
+          <div class="text-xs font-bold text-amber-900 dark:text-amber-200">
+            Sesión Temporal Pendiente de Inicio
+          </div>
+          <p class="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+            Al realizar la primera consulta se resolverá el Captcha. Una vez autenticado, <b>no volverá a solicitar Captcha durante los siguientes 50 a 60 minutos</b>.
+          </p>
+        </div>
+      </div>
+
+      <button (click)="solicitarCaptchaManual()"
+              [disabled]="cargandoCaptchaManual()"
+              class="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs shrink-0 cursor-pointer self-start sm:self-auto flex items-center gap-1.5"
+              style="color: #ffffff !important;">
+        <span class="material-symbols-outlined text-[16px]">edit_note</span>
+        <span style="color: #ffffff !important;">Ingresar Captcha Manual</span>
+      </button>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- 2. NAVEGADOR DE MODOS / TABS -->
+  <!-- ========================================================================= -->
+  <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+    <div class="flex items-center gap-2 overflow-x-auto">
+      
+      <!-- Tab 1: Automático con OCR -->
+      <button (click)="modoActivo.set('automatico')"
+              [class.bg-blue-700]="modoActivo() === 'automatico'"
+              [class.text-white]="modoActivo() === 'automatico'"
+              [class.shadow-md]="modoActivo() === 'automatico'"
+              [class.bg-white]="modoActivo() !== 'automatico'"
+              [class.dark:bg-slate-800]="modoActivo() !== 'automatico'"
+              [class.text-slate-700]="modoActivo() !== 'automatico'"
+              [class.dark:text-slate-300]="modoActivo() !== 'automatico'"
+              class="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer border border-slate-200 dark:border-slate-700 select-none">
+        <span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+        <span>Consulta Principal</span>
+        <span class="ml-1 px-1.5 py-0.5 text-[10px] font-mono-code rounded-full bg-blue-900/60 text-blue-200 border border-blue-400/40">
+          Recomendado
+        </span>
+      </button>
+
+      <!-- Tab 2: Laboratorio Paso a Paso -->
+      <button (click)="modoActivo.set('pasos')"
+              [class.bg-blue-700]="modoActivo() === 'pasos'"
+              [class.text-white]="modoActivo() === 'pasos'"
+              [class.shadow-md]="modoActivo() === 'pasos'"
+              [class.bg-white]="modoActivo() !== 'pasos'"
+              [class.dark:bg-slate-800]="modoActivo() !== 'pasos'"
+              [class.text-slate-700]="modoActivo() !== 'pasos'"
+              [class.dark:text-slate-300]="modoActivo() !== 'pasos'"
+              class="px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer border border-slate-200 dark:border-slate-700 select-none">
+        <span class="material-symbols-outlined text-[18px]">developer_mode</span>
+        <span>Laboratorio Paso a Paso</span>
+      </button>
+
+      <!-- Tab 3: Casilla Local DRTC Puno -->
+      <button (click)="modoActivo.set('casilla-local')"
+              [class.bg-blue-700]="modoActivo() === 'casilla-local'"
+              [class.text-white]="modoActivo() === 'casilla-local'"
+              [class.shadow-md]="modoActivo() === 'casilla-local'"
+              [class.bg-white]="modoActivo() !== 'casilla-local'"
+              [class.dark:bg-slate-800]="modoActivo() !== 'casilla-local'"
+              [class.text-slate-700]="modoActivo() !== 'casilla-local'"
+              [class.dark:text-slate-300]="modoActivo() !== 'casilla-local'"
+              class="px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer border border-slate-200 dark:border-slate-700 select-none">
+        <span class="material-symbols-outlined text-[18px]">dns</span>
+        <span>Conmutador Casilla Local DRTC</span>
+      </button>
+
+    </div>
+
+    @if (tiempoEjecucion() > 0 && !cargando()) {
+      <div class="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-mono-code">
+        <span class="material-symbols-outlined text-[16px] text-emerald-600">timer</span>
+        <span>Respuesta en <b>{{ tiempoEjecucion() }}s</b></span>
+      </div>
+    }
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 3. BARRA HERO DE BÚSQUEDA (MODO PRINCIPAL) -->
+  <!-- ========================================================================= -->
+  @if (modoActivo() === 'automatico') {
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+      
+      <!-- Controles de Tipo de Documento y Búsqueda -->
+      <div class="flex flex-col md:flex-row items-stretch md:items-center gap-4">
+        
+        <!-- Segmented Control DNI / RUC -->
+        <div class="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0 self-start md:self-auto">
+          <button (click)="cambiarTipoDoc('RUC')"
+                  [class.bg-white]="tipoDoc() === 'RUC'"
+                  [class.dark:bg-slate-900]="tipoDoc() === 'RUC'"
+                  [class.text-blue-900]="tipoDoc() === 'RUC'"
+                  [class.dark:text-blue-300]="tipoDoc() === 'RUC'"
+                  [class.shadow-xs]="tipoDoc() === 'RUC'"
+                  class="px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer">
+            RUC (11 dígitos)
+          </button>
+          <button (click)="cambiarTipoDoc('DNI')"
+                  [class.bg-white]="tipoDoc() === 'DNI'"
+                  [class.dark:bg-slate-900]="tipoDoc() === 'DNI'"
+                  [class.text-blue-900]="tipoDoc() === 'DNI'"
+                  [class.dark:text-blue-300]="tipoDoc() === 'DNI'"
+                  [class.shadow-xs]="tipoDoc() === 'DNI'"
+                  class="px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer">
+            DNI (8 dígitos)
+          </button>
+        </div>
+
+        <!-- Input Principal de Búsqueda -->
+        <div class="relative flex-1">
+          <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+            <span class="material-symbols-outlined text-[20px]">search</span>
+          </div>
+          <input type="text"
+                 [placeholder]="tipoDoc() === 'RUC' ? 'Ingrese RUC a consultar (ej. 20363914994)' : 'Ingrese DNI a consultar (ej. 42455198)'"
+                 [(ngModel)]="documentoBusqueda"
+                 (keyup.enter)="ejecutarConsulta(false)"
+                 [disabled]="cargando()"
+                 class="w-full pl-10 pr-24 py-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-mono-code font-bold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all">
+
+          @if (documentoBusqueda()) {
+            <button (click)="documentoBusqueda.set('')"
+                    class="absolute inset-y-0 right-2 pr-2 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
+              <span class="material-symbols-outlined text-[18px]">close</span>
+            </button>
+          }
+        </div>
+
+        <!-- Botón Principal: Ejecutar Consulta -->
+        <button (click)="ejecutarConsulta(false)"
+                [disabled]="cargando()"
+                class="px-6 py-3 bg-blue-700 hover:bg-blue-800 active:scale-[0.98] text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed shrink-0"
+                style="color: #ffffff !important;">
+          @if (cargando()) {
+            <span class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+            <span style="color: #ffffff !important;">Consultando...</span>
+          } @else {
+            <span class="material-symbols-outlined text-[18px]">search</span>
+            <span style="color: #ffffff !important;">Consultar MTC</span>
+          }
+        </button>
+
+      </div>
+
+      <!-- Presets y Botón para alternar Captcha Manual -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1">
+            <span class="material-symbols-outlined text-[15px]">history</span>
+            Accesos Rápidos:
+          </span>
+          @for (item of presets; track item.doc) {
+            <button (click)="seleccionarPreset(item)"
+                    class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-blue-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 hover:text-blue-700 dark:text-slate-300 dark:hover:text-blue-300 font-mono-code transition-colors border border-slate-200 dark:border-slate-700 flex items-center gap-1 cursor-pointer">
+              <span class="font-bold">{{ item.label }}</span>
+            </button>
+          }
+        </div>
+
+        <!-- Toggle para mostrar/ocultar panel de ingreso manual -->
+        <button (click)="mostrarInputManual() ? mostrarInputManual.set(false) : solicitarCaptchaManual()"
+                class="text-blue-700 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer font-semibold">
+          <span class="material-symbols-outlined text-[16px]">
+            {{ mostrarInputManual() ? 'keyboard_arrow_up' : 'edit_square' }}
+          </span>
+          <span>{{ mostrarInputManual() ? 'Ocultar Captcha Manual' : 'Ingresar Captcha Manualmente' }}</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- PANEL DE INGRESO MANUAL DE CAPTCHA (DISPONIBLE O SUGERIDO TRAS ERROR) -->
+    <!-- ========================================================================= -->
+    @if (mostrarInputManual()) {
+      <div class="p-5 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border-2 border-indigo-300 dark:border-indigo-800 shadow-md space-y-4">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-indigo-200 dark:border-indigo-800/80 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold">
+              <span class="material-symbols-outlined text-[20px]">pin</span>
+            </span>
+            <div>
+              <h3 class="text-xs font-extrabold text-indigo-950 dark:text-indigo-200 uppercase tracking-wide">
+                Ingreso Manual de Captcha MTC
+              </h3>
+              <p class="text-[11px] text-indigo-700 dark:text-indigo-300">
+                Resuelva el Captcha visualmente. La sesión resultante quedará activa por 1 hora.
+              </p>
+            </div>
+          </div>
+
+          <button (click)="solicitarCaptchaManual()"
+                  [disabled]="cargandoCaptchaManual()"
+                  class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-indigo-300 dark:border-indigo-700 text-xs font-semibold text-indigo-800 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-1 self-start sm:self-auto cursor-pointer">
+            <span class="material-symbols-outlined text-[15px]">refresh</span>
+            <span>Cambiar Imagen</span>
+          </button>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center gap-5">
+          <!-- Imagen del Captcha entregada por MTC -->
+          @if (captchaManualImg()) {
+            <div class="p-2.5 bg-white dark:bg-slate-900 border-2 border-dashed border-indigo-300 dark:border-indigo-700 rounded-xl shadow-inner shrink-0">
+              <img [src]="'data:image/jpeg;base64,' + captchaManualImg()" 
+                   alt="Captcha MTC Oficial" 
+                   class="h-12 w-auto object-contain rounded"
+                   title="Imagen original de seguridad de wsapiadmcasilla.mtc.gob.pe">
+            </div>
+          } @else {
+            <div class="h-12 w-48 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-xl flex items-center justify-center text-xs text-slate-400">
+              Cargando imagen...
+            </div>
+          }
+
+          <!-- Campo de entrada para el texto del Captcha -->
+          <div class="flex-1 w-full space-y-1">
+            <label class="text-[10px] font-bold text-indigo-900 dark:text-indigo-300 uppercase font-mono-code">
+              Escriba los 6 caracteres visibles:
+            </label>
+            <div class="flex items-center gap-2">
+              <input type="text"
+                     placeholder="Ej: 8NMKGY"
+                     maxlength="7"
+                     [(ngModel)]="captchaManualTexto"
+                     (keyup.enter)="ejecutarConsulta(true)"
+                     class="w-full max-w-[200px] px-3 py-2 bg-white dark:bg-slate-900 border-2 border-indigo-400 dark:border-indigo-600 rounded-xl text-base font-mono-code font-extrabold uppercase tracking-widest text-slate-900 dark:text-white text-center focus:outline-none focus:ring-2 focus:ring-indigo-600">
+              
+              <button (click)="ejecutarConsulta(true)"
+                      [disabled]="cargando() || !captchaManualTexto()"
+                      class="px-5 py-2.5 bg-indigo-700 hover:bg-indigo-800 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                      style="color: #ffffff !important;">
+                <span class="material-symbols-outlined text-[16px]">check</span>
+                <span style="color: #ffffff !important;">Validar y Consultar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    }
+
+  }
+
+  <!-- ========================================================================= -->
+  <!-- 4. ANIMACIÓN Y BARRA DE PROGRESO DE ETAPAS -->
+  <!-- ========================================================================= -->
+  @if (cargando()) {
+    <div class="p-6 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800/80 dark:to-slate-900 border border-blue-200 dark:border-blue-900/60 shadow-sm space-y-4 animate-pulse">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center">
+            <span class="material-symbols-outlined animate-spin text-[22px]">progress_activity</span>
+          </div>
+          <div>
+            <div class="text-sm font-bold text-slate-900 dark:text-white">Procesando Consulta MTC</div>
+            <div class="text-xs text-blue-700 dark:text-blue-400 font-mono-code">{{ etapaProgreso() }}</div>
+          </div>
+        </div>
+        <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-200 dark:bg-blue-950 text-blue-900 dark:text-blue-300">
+          En Progreso
+        </span>
+      </div>
+
+      <div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 h-full rounded-full animate-[shimmer_2s_infinite]"></div>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- 5. ALERTA DE ERROR / AVISO DEL SISTEMA -->
+  <!-- ========================================================================= -->
+  @if (errorMensaje()) {
+    <div class="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 flex items-start justify-between gap-3">
+      <div class="flex items-start gap-3">
+        <span class="material-symbols-outlined text-rose-600 dark:text-rose-400 shrink-0 mt-0.5">error</span>
+        <div class="space-y-1">
+          <div class="text-xs font-bold text-rose-900 dark:text-rose-200">Aviso del Sistema MTC</div>
+          <p class="text-xs text-rose-700 dark:text-rose-300 leading-relaxed">{{ errorMensaje() }}</p>
+        </div>
+      </div>
+
+      @if (!mostrarInputManual()) {
+        <button (click)="solicitarCaptchaManual()"
+                class="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg shrink-0 cursor-pointer shadow-xs"
+                style="color: #ffffff !important;">
+          Resolver Manualmente
+        </button>
+      }
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- 6. RESULTADO PRINCIPAL: FICHA OFICIAL DEL ADMINISTRADO -->
+  <!-- ========================================================================= -->
+  @if (administradoSeleccionado(); as adm) {
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-lg overflow-hidden transition-all">
+      
+      <!-- Encabezado de la Ficha con Sello Institucional -->
+      <div class="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 p-5 text-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-blue-900/40">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-xl bg-blue-700/80 border border-blue-400/30 flex items-center justify-center text-white shrink-0 shadow-inner">
+            <span class="material-symbols-outlined text-[26px]">domain</span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-mono-code px-2 py-0.5 rounded bg-blue-500/20 text-blue-200 border border-blue-400/30">
+                {{ adm.nombreTipoPersona || 'PERSONA JURIDICA' }}
+              </span>
+              <span class="text-[10px] font-mono-code text-slate-400">
+                ID Persona: {{ adm.idPersona || '734798' }}
+              </span>
+            </div>
+            <h2 class="text-lg font-extrabold text-white leading-tight">
+              {{ adm.razonSocial || adm.nombreCompleto || 'DIRECCIÓN REGIONAL DE TRANSPORTES Y COMUNICACIONES PUNO' }}
+            </h2>
+          </div>
+        </div>
+
+        <!-- Badge de Estado de Casilla -->
+        <div class="flex items-center gap-2 self-start sm:self-auto">
+          @if (adm.estado) {
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 shadow-xs">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+              Casilla MTC Activa & Habilitada
+            </span>
+          } @else {
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-400/40">
+              Casilla No Habilitada
+            </span>
+          }
+        </div>
+      </div>
+
+      <!-- Cuerpo de la Ficha: Cuadrícula de Datos Oficiales -->
+      <div class="p-6 space-y-6">
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          
+          <!-- RUC -->
+          <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 space-y-1">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono-code">RUC Institucional</div>
+            <div class="text-base font-extrabold text-slate-900 dark:text-white font-mono-code flex items-center justify-between">
+              <span>{{ adm.ruc || 'N/A' }}</span>
+              @if (adm.ruc) {
+                <button (click)="copiarAlPortapapeles(adm.ruc)" class="p-1 text-slate-400 hover:text-blue-600 transition-colors" title="Copiar RUC">
+                  <span class="material-symbols-outlined text-[16px]">content_copy</span>
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- DNI Titular / Representante -->
+          <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 space-y-1">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono-code">DNI del Titular</div>
+            <div class="text-base font-extrabold text-slate-900 dark:text-white font-mono-code flex items-center justify-between">
+              <span>{{ adm.nroDocumento || 'N/A' }}</span>
+              @if (adm.nroDocumento) {
+                <button (click)="copiarAlPortapapeles(adm.nroDocumento)" class="p-1 text-slate-400 hover:text-blue-600 transition-colors" title="Copiar DNI">
+                  <span class="material-symbols-outlined text-[16px]">content_copy</span>
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Nombre Completo Titular -->
+          <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 space-y-1">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono-code">Titular / Representante</div>
+            <div class="text-sm font-bold text-slate-900 dark:text-white truncate" [title]="adm.nombreCompleto">
+              {{ adm.nombreCompleto || 'BETO ANGEL PORTILLO CALCINA' }}
+            </div>
+          </div>
+
+          <!-- Correo Electrónico Oficial -->
+          <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 space-y-1 sm:col-span-2">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono-code">Correo Electrónico Vinculado</div>
+            <div class="text-sm font-semibold text-slate-800 dark:text-slate-200 font-mono-code flex items-center justify-between">
+              <span class="truncate">{{ adm.correoElectronico || 'bportillo@transportespuno.gob.pe' }}</span>
+              @if (adm.correoElectronico) {
+                <button (click)="copiarAlPortapapeles(adm.correoElectronico)" class="p-1 text-slate-400 hover:text-blue-600 transition-colors" title="Copiar Correo">
+                  <span class="material-symbols-outlined text-[16px]">content_copy</span>
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Usuario de Acceso -->
+          <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 space-y-1">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono-code">Usuario Casilla</div>
+            <div class="text-sm font-bold text-slate-900 dark:text-white font-mono-code">
+              {{ adm.username || adm.nroDocumento || '42455198' }}
+            </div>
+          </div>
+
+        </div>
+
+        @if (copiadoExitoso()) {
+          <div class="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-xs font-semibold flex items-center gap-1.5 transition-all">
+            <span class="material-symbols-outlined text-[16px]">check_circle</span>
+            <span>¡Dato copiado al portapapeles con éxito!</span>
+          </div>
+        }
+
+        <!-- Botones de Acción Operativa Oficial -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+          
+          <div class="flex flex-wrap items-center gap-2">
+            <button (click)="irANuevaEmision()"
+                    class="px-5 py-2.5 bg-blue-700 hover:bg-blue-800 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+                    style="color: #ffffff !important;">
+              <span class="material-symbols-outlined text-[18px]">outgoing_mail</span>
+              <span style="color: #ffffff !important;">Emitir Notificación a esta Casilla</span>
+            </button>
+
+            <button (click)="abrirModalJson()"
+                    class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-300 dark:border-slate-700">
+              <span class="material-symbols-outlined text-[16px]">data_object</span>
+              <span>Ver JSON Oficial</span>
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button (click)="imprimirFicha()"
+                    class="p-2.5 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    title="Imprimir Ficha">
+              <span class="material-symbols-outlined text-[18px]">print</span>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- 7. PESTAÑA 2: LABORATORIO PASO A PASO -->
+  <!-- ========================================================================= -->
+  @if (modoActivo() === 'pasos') {
+    <div class="space-y-6">
+      
+      <div class="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-xs text-amber-900 dark:text-amber-200 flex items-center gap-3">
+        <span class="material-symbols-outlined text-amber-600 dark:text-amber-400 shrink-0">science</span>
+        <span>
+          <b>Modo Diagnóstico Técnico:</b> Permite inspeccionar individualmente el Captcha entregado por el MTC, verificar la tasa de acierto del OCR, obtener los JWT intermedios e inspeccionar los roles devueltos por el backend ASP.NET de MTC.
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Tarjeta Paso 1: Captcha & OCR -->
+        <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+            <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-blue-700 text-white flex items-center justify-center text-[10px]">1</span>
+              <span>Captcha & Visión OCR</span>
+            </h3>
+            <button (click)="paso1ObtenerCaptcha()"
+                    class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold rounded-lg cursor-pointer">
+              Obtener Captcha MTC
+            </button>
+          </div>
+
+          @if (captchaImg()) {
+            <div class="space-y-3">
+              <div class="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center">
+                <img [src]="'data:image/jpeg;base64,' + captchaImg()" alt="Captcha MTC" class="h-12 border border-slate-300 dark:border-slate-700 rounded shadow-xs">
+              </div>
+              <div class="space-y-1">
+                <label class="text-[10px] font-bold text-slate-400 uppercase font-mono-code">Texto Resuelto por OCR:</label>
+                <input type="text" [(ngModel)]="captchaTextoResuelto" class="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-mono-code font-bold">
+              </div>
+              <div class="text-[10px] font-mono-code text-slate-400 truncate">
+                Key: {{ captchaKey() }}
+              </div>
+            </div>
+          } @else {
+            <div class="p-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+              Presione "Obtener Captcha MTC" para probar la descarga y OCR.
+            </div>
+          }
+        </div>
+
+        <!-- Tarjeta Paso 2: Autenticación Login MTC -->
+        <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+            <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-blue-700 text-white flex items-center justify-center text-[10px]">2</span>
+              <span>Login Inicial MTC</span>
+            </h3>
+            <button (click)="paso2Login()"
+                    [disabled]="!captchaKey()"
+                    class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-[11px] font-bold rounded-lg cursor-pointer">
+              Ejecutar Login
+            </button>
+          </div>
+
+          <div class="space-y-2 text-xs">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-[10px] text-slate-400 font-bold uppercase">Usuario:</label>
+                <input type="text" [(ngModel)]="usuarioOperador" class="w-full px-2 py-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded text-xs">
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-400 font-bold uppercase">Clave:</label>
+                <input type="password" [(ngModel)]="claveOperador" class="w-full px-2 py-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded text-xs">
+              </div>
+            </div>
+
+            @if (loginToken()) {
+              <div class="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-lg space-y-1">
+                <div class="text-[10px] font-bold text-emerald-800 dark:text-emerald-300">¡Login Exitoso! Token Inicial:</div>
+                <div class="text-[10px] font-mono-code text-slate-600 dark:text-slate-300 truncate">{{ loginToken() }}</div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Tarjeta Paso 3: Roles & Selección de Rol -->
+        <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+            <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-blue-700 text-white flex items-center justify-center text-[10px]">3</span>
+              <span>Roles & Token de Rol</span>
+            </h3>
+            <button (click)="paso4SeleccionarRol()"
+                    [disabled]="!loginToken()"
+                    class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-[11px] font-bold rounded-lg cursor-pointer">
+              Seleccionar Rol
+            </button>
+          </div>
+
+          <div class="space-y-2 text-xs">
+            <label class="text-[10px] text-slate-400 font-bold uppercase">ID Rol Seleccionado:</label>
+            <input type="text" [(ngModel)]="idRolSeleccionado" class="w-full px-2 py-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded text-xs">
+
+            @if (roleToken()) {
+              <div class="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-lg">
+                <div class="text-[10px] font-bold text-emerald-800 dark:text-emerald-300">Token de Rol Generado</div>
+                <div class="text-[10px] font-mono-code text-slate-600 dark:text-slate-300 truncate">{{ roleToken() }}</div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Tarjeta Paso 4: Consulta Final -->
+        <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+            <h3 class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-blue-700 text-white flex items-center justify-center text-[10px]">4</span>
+              <span>Búsqueda con Token</span>
+            </h3>
+            <button (click)="paso5Buscar()"
+                    [disabled]="!loginToken()"
+                    class="px-3 py-1 bg-blue-700 hover:bg-blue-800 disabled:opacity-50 text-white text-[11px] font-bold rounded-lg cursor-pointer">
+              Ejecutar Búsqueda
+            </button>
+          </div>
+
+          <div class="space-y-2 text-xs">
+            <label class="text-[10px] text-slate-400 font-bold uppercase">Término de Búsqueda:</label>
+            <input type="text" [(ngModel)]="documentoBusqueda" class="w-full px-2 py-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded text-xs">
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- 8. PESTAÑA 3: CONMUTADOR CASILLA LOCAL DRTC PUNO -->
+  <!-- ========================================================================= -->
+  @if (modoActivo() === 'casilla-local') {
+    <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Conmutador de Servidor Casilla DRTC Puno</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Permite alternar entre el nodo de desarrollo y el nodo oficial de producción.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 self-start sm:self-auto">
+          <button (click)="casillaService.setEntorno('desarrollo')"
+                  [class.bg-white]="casillaService.entornoActivo() === 'desarrollo'"
+                  [class.dark:bg-slate-900]="casillaService.entornoActivo() === 'desarrollo'"
+                  [class.text-blue-900]="casillaService.entornoActivo() === 'desarrollo'"
+                  [class.dark:text-blue-300]="casillaService.entornoActivo() === 'desarrollo'"
+                  class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer">
+            Desarrollo (casillas.)
+          </button>
+          <button (click)="casillaService.setEntorno('produccion')"
+                  [class.bg-white]="casillaService.entornoActivo() === 'produccion'"
+                  [class.dark:bg-slate-900]="casillaService.entornoActivo() === 'produccion'"
+                  [class.text-emerald-900]="casillaService.entornoActivo() === 'produccion'"
+                  [class.dark:text-emerald-300]="casillaService.entornoActivo() === 'produccion'"
+                  class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer">
+            Producción (mtc.)
+          </button>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 text-xs space-y-2">
+        <div class="font-bold text-slate-800 dark:text-slate-200">Servidor Activo Seleccionado:</div>
+        <div class="font-mono-code font-bold text-blue-700 dark:text-blue-400">
+          {{ casillaService.getBaseUrl() }}
+        </div>
+        <p class="text-slate-500 dark:text-slate-400 leading-relaxed">
+          Las verificaciones que se ejecuten con este conmutador apuntarán directamente al entorno correspondiente, validando las credenciales y el estado de la casilla electrónica del administrado.
+        </p>
+      </div>
+
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- 9. MODAL DE JSON OFICIAL TÉCNICO -->
+  <!-- ========================================================================= -->
+  @if (modalJsonAbierto()) {
+    <div class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden">
+        
+        <div class="p-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-blue-400">data_object</span>
+            <span class="text-xs font-bold font-mono-code">Respuesta JSON MTC Oficial</span>
+          </div>
+          <button (click)="cerrarModalJson()" class="p-1 text-slate-400 hover:text-white cursor-pointer">
+            <span class="material-symbols-outlined text-[20px]">close</span>
+          </button>
+        </div>
+
+        <div class="p-4 overflow-y-auto font-mono-code text-xs bg-slate-950 text-emerald-400">
+          <pre>{{ resultado() | json }}</pre>
+        </div>
+
+        <div class="p-3 bg-slate-100 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+          <button (click)="cerrarModalJson()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-lg cursor-pointer">
+            Cerrar
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
+
+</div>

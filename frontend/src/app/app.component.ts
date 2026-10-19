@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { ThemeService } from './core/services/theme.service';
 import { AuthService } from './core/services/auth.service';
 import { PreloaderService } from './core/services/preloader.service';
+import { CasillaService } from './core/services/casilla.service';
 import { LoginModalComponent } from './core/components/login-modal/login-modal.component';
 
 @Component({
@@ -17,6 +18,7 @@ export class AppComponent implements OnInit, OnDestroy {
   public themeService = inject(ThemeService);
   public authService = inject(AuthService);
   public preloaderService = inject(PreloaderService);
+  public casillaService = inject(CasillaService);
 
   horaActual = signal<string>('');
   isScrolled = signal<boolean>(false);

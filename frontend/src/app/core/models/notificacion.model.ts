@@ -106,6 +106,12 @@ export interface VerificarCasillaResponse {
   codigo_casilla: string;
   estado_casilla: string;
   razon_social?: string;
+  direccion?: string;
+  correo?: string;
+  telefono?: string;
+  representante_legal?: string;
+  servidor_host?: string;
+  entorno?: string;
   mensaje: string;
   valido_para_notificar: boolean;
   domicilio_telematico_valido: boolean;

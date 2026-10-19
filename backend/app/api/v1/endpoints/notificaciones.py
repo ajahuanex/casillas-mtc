@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -88,102 +88,49 @@ async def verificar_casilla(
     numero_documento: str,
     tipo_persona: Optional[str] = None,
     tipo_documento: Optional[str] = None,
+    entorno: Optional[str] = Query("desarrollo", description="Entorno: 'desarrollo' o 'produccion'"),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    2. Verificar estado de Casilla Electrónica en MTC.
-    Detecta automáticamente si es RUC (Persona Jurídica '00002' o Persona Natural con RUC '00005')
-    o DNI ('00001' / '00002') y consulta la disponibilidad de casilla electrónica conforme al D.S. N° 001-2020-MTC.
+    2. Verificar estado de Casilla Electrónica en MTC / DRTC Puno.
+    Conmuta entre entorno de Desarrollo (casillas.transportespuno.gob.pe)
+    y Producción (mtc.transportespuno.gob.pe), obteniendo datos reales
+    institucionales (RUC 20363914994) y empresariales.
     """
+    from app.api.v1.endpoints.casilla import verificar_casilla_proxy
+
     doc_clean = numero_documento.strip()
-    
-    # Auto-detección de tipo de documento y persona
-    if not tipo_documento or not tipo_persona:
-        if len(doc_clean) == 11 and doc_clean.startswith("20"):
-            tipo_persona = "00002"  # Persona Jurídica
-            tipo_documento = "00001"  # RUC
-        elif len(doc_clean) == 11 and doc_clean.startswith("10"):
-            tipo_persona = "00005"  # Persona Natural con RUC
-            tipo_documento = "00001"  # RUC
-        elif len(doc_clean) == 8 and doc_clean.isdigit():
-            tipo_persona = "00001"  # Persona Natural
-            tipo_documento = "00002"  # DNI
-        else:
-            tipo_persona = tipo_persona or "00001"
-            tipo_documento = tipo_documento or "00002"
+    res = await verificar_casilla_proxy(
+        codTipoPersona=tipo_persona,
+        codTipoDocumento=tipo_documento,
+        nroDocumento=doc_clean,
+        entorno=entorno,
+        db=db
+    )
+    info = res.get("info", {})
+    data = info.get("data", {})
+    activo = data.get("activo", True)
 
-    try:
-        try:
-            # 1. Intentar con el API oficial de Casillas DRTC Puno (Node-RED)
-            resultado_drtc = await mtc_client.verificar_estado_casilla_drtc(
-                nro_documento=doc_clean,
-                cod_tipo_persona=tipo_persona,
-                cod_tipo_documento=tipo_documento
-            )
-            data_info = resultado_drtc.get("info", {})
-            data_sub = data_info.get("data", {})
-            activo = data_sub.get("activo", True)
-
-            return {
-                "success": data_info.get("success", True),
-                "numero_documento": doc_clean,
-                "tipo_persona": tipo_persona,
-                "tipo_documento": tipo_documento,
-                "tiene_casilla": activo,
-                "codigo_casilla": data_sub.get("codigoCasilla", f"CAS-PUNO-{doc_clean}"),
-                "estado_casilla": "ACTIVA" if activo else "INACTIVA",
-                "razon_social": data_sub.get("nombreCompleto") or data_sub.get("razonSocial"),
-                "mensaje": data_info.get("message", "Consulta realizada con éxito en Casillas DRTC Puno"),
-                "valido_para_notificar": True,
-                "domicilio_telematico_valido": True,
-                "normativa_aplicable": "D.S. N° 001-2020-MTC Art. 4 y Art. 11"
-            }
-        except Exception as drtc_err:
-            # 2. Intentar servicio nacional MTC
-            resultado = await mtc_client.verificar_estado_casilla(
-                nro_documento=doc_clean,
-                cod_tipo_persona=tipo_persona,
-                cod_tipo_documento=tipo_documento
-            )
-            return {
-                "success": True,
-                "numero_documento": doc_clean,
-                "tipo_persona": tipo_persona,
-                "tipo_documento": tipo_documento,
-                "tiene_casilla": True,
-                "codigo_casilla": resultado.get("data", {}).get("codigoCasilla", f"CAS-PUNO-{doc_clean}"),
-                "estado_casilla": resultado.get("data", {}).get("estadoCasilla", "ACTIVA"),
-                "razon_social": resultado.get("data", {}).get("razonSocial"),
-                "mensaje": resultado.get("message", "Casilla electrónica verificada en MTC."),
-                "valido_para_notificar": True,
-                "domicilio_telematico_valido": True,
-                "normativa_aplicable": "D.S. N° 001-2020-MTC Art. 4 y Art. 11"
-            }
-    except Exception as e:
-        # Modo de fallback / interoperabilidad simulada para desarrollo o administrados registrados localmente
-        result_admin = await db.execute(
-            select(Administrado).where(Administrado.numero_documento == doc_clean)
-        )
-        administrado = result_admin.scalar_one_or_none()
-        nombre = administrado.razon_social_o_nombre if administrado else (
-            "EMPRESA DE TRANSPORTES TITICACA S.R.L." if doc_clean.startswith("20") else "USUARIO ADMINISTRADO"
-        )
-        tiene_casilla = True
-
-        return {
-            "success": True,
-            "numero_documento": doc_clean,
-            "tipo_persona": tipo_persona,
-            "tipo_documento": tipo_documento,
-            "tiene_casilla": tiene_casilla,
-            "codigo_casilla": f"CAS-PUNO-2026-{doc_clean[-5:]}",
-            "estado_casilla": "ACTIVA",
-            "razon_social": nombre,
-            "mensaje": "Casilla electrónica validada exitosamente en entorno MTC.",
-            "valido_para_notificar": True,
-            "domicilio_telematico_valido": True,
-            "normativa_aplicable": "D.S. N° 001-2020-MTC Art. 4 y Art. 11"
-        }
+    return {
+        "success": info.get("success", True),
+        "numero_documento": doc_clean,
+        "tipo_persona": data.get("tipoPersona", tipo_persona),
+        "tipo_documento": data.get("tipoDocumento", tipo_documento),
+        "tiene_casilla": activo,
+        "codigo_casilla": data.get("codigoCasilla", f"CAS-{doc_clean}"),
+        "estado_casilla": "ACTIVA" if activo else "INACTIVA",
+        "razon_social": data.get("nombreCompleto") or data.get("razonSocial"),
+        "direccion": data.get("direccion"),
+        "correo": data.get("correo"),
+        "telefono": data.get("telefono"),
+        "representante_legal": data.get("representanteLegal"),
+        "servidor_host": info.get("servidorHost"),
+        "entorno": info.get("entorno"),
+        "mensaje": info.get("message", "Casilla electrónica verificada"),
+        "valido_para_notificar": activo,
+        "domicilio_telematico_valido": activo,
+        "normativa_aplicable": "D.S. N° 001-2020-MTC Art. 4 y Art. 11"
+    }
 
 
 @router.post("/", response_model=NotificacionResponse, status_code=status.HTTP_201_CREATED)

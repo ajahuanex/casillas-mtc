@@ -18,7 +18,7 @@ export const routes: Routes = [
   {
     path: 'custodia',
     component: CustodiaMinioComponent,
-    title: 'Bóveda MinIO S3 & Custodia Criptográfica - DRTC Puno'
+    title: 'Bóveda RustFS S3 & Custodia Criptográfica - DRTC Puno'
   },
   {
     path: 'bandeja',
@@ -34,6 +34,11 @@ export const routes: Routes = [
     path: 'plantillas',
     loadComponent: () => import('./features/plantillas/plantillas-catalogo.component').then(m => m.PlantillasCatalogoComponent),
     title: 'Catálogo de Plantillas Oficiales P-* - Casilla MTC'
+  },
+  {
+    path: 'consulta',
+    loadComponent: () => import('./features/consulta-administrados/consulta-administrados.component').then(m => m.ConsultaAdministradosComponent),
+    title: 'Consulta Integral de Administrados & Casillas MTC'
   },
 
   {

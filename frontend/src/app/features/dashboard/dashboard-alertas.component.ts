@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NotificacionesService } from '../../core/services/notificaciones.service';
 import { ThemeService } from '../../core/services/theme.service';
+import { CasillaService } from '../../core/services/casilla.service';
 import { Notificacion, DashboardKpis, VerificarCasillaResponse } from '../../core/models/notificacion.model';
 
 @Component({
@@ -15,6 +16,7 @@ import { Notificacion, DashboardKpis, VerificarCasillaResponse } from '../../cor
 export class DashboardAlertasComponent implements OnInit {
   private notifService = inject(NotificacionesService);
   public themeService = inject(ThemeService);
+  public casillaService = inject(CasillaService);
 
   // Signals reactivos para el dashboard
   public kpis = signal<DashboardKpis>({
@@ -35,7 +37,7 @@ export class DashboardAlertasComponent implements OnInit {
   public busquedaTexto = signal<string>('');
 
   // Verificación rápida de RUC / DNI
-  public rucConsulta = signal<string>('20448192031');
+  public rucConsulta = signal<string>('20363914994');
   public verificandoRuc = signal<boolean>(false);
   public resultadoVerificacion = signal<VerificarCasillaResponse | null>(null);
   public errorVerificacion = signal<string | null>(null);
@@ -95,6 +97,13 @@ export class DashboardAlertasComponent implements OnInit {
     });
   }
 
+  public cambiarEntorno(modo: 'desarrollo' | 'produccion'): void {
+    this.casillaService.setEntorno(modo);
+    if (this.resultadoVerificacion()) {
+      this.consultarCasillaMTC();
+    }
+  }
+
   public consultarCasillaMTC(): void {
     const doc = this.rucConsulta().trim();
     if (!doc || doc.length < 8) {
@@ -105,7 +114,8 @@ export class DashboardAlertasComponent implements OnInit {
     this.verificandoRuc.set(true);
     this.errorVerificacion.set(null);
 
-    this.notifService.verificarCasilla(doc).subscribe({
+    const entorno = this.casillaService.entornoActivo();
+    this.notifService.verificarCasilla(doc, undefined, undefined, entorno).subscribe({
       next: (res) => {
         this.resultadoVerificacion.set(res);
         this.verificandoRuc.set(false);

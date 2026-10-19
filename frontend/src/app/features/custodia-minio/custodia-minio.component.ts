@@ -93,7 +93,7 @@ export class CustodiaMinioComponent implements OnInit {
     this.loading.set(true);
     this.service.poblarDocumentosFaltantes().subscribe({
       next: (res) => {
-        this.mostrarToast(`Bóveda MinIO S3 sincronizada: ${res.documentos_poblados_nuevos} documentos generados y custodiados.`);
+        this.mostrarToast(`Bóveda RustFS S3 sincronizada: ${res.documentos_poblados_nuevos} documentos generados y custodiados.`);
         this.cargarDatosMinio();
       },
       error: (err) => {
@@ -144,12 +144,12 @@ export class CustodiaMinioComponent implements OnInit {
         this.modalSubidaAbierto.set(false);
         this.archivoParaSubir.set(null);
         this.hashSha256Calculado.set('');
-        this.mostrarToast('Documento custodiado con éxito en el bucket MinIO S3.');
+        this.mostrarToast('Documento custodiado con éxito en el bucket RustFS S3.');
         this.cargarDatosMinio();
       },
       error: (err) => {
         this.subiendoArchivo.set(false);
-        alert(`Error al subir documento a MinIO: ${err.message || err}`);
+        alert(`Error al subir documento a RustFS: ${err.message || err}`);
       }
     });
   }

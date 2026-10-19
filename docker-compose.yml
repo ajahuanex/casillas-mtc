@@ -18,49 +18,28 @@ services:
       timeout: 5s
       retries: 5
 
-  # Almacenamiento de Objetos S3-compatible: MinIO para PDFs y Acuses
-  minio:
-    image: cgr.dev/chainguard/minio:latest
-    container_name: casillas_minio
+  # Almacenamiento de Objetos S3-compatible: RustFS (High-Performance Distributed Object Storage en Rust)
+  rustfs:
+    image: rustfs/rustfs:latest
+    container_name: casillas_rustfs
     restart: unless-stopped
-    command: server /data --console-address ":9001"
+    command: rustfs server --console-enable /data
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:-rustfsadmin}
+      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:-rustfsadmin123}
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CONSOLE_ADDRESS: ":9001"
+      RUSTFS_ADDRESS: ":9000"
     ports:
-      - "${MINIO_PORT:-9000}:9000"       # S3 API
-      - "${MINIO_CONSOLE_PORT:-9001}:9001" # Web Console UI
+      - "${STORAGE_PORT:-9000}:9000"         # S3 API
+      - "${STORAGE_CONSOLE_PORT:-9001}:9001" # Web Console UI
     volumes:
-      - minio_data:/data
+      - rustfs_data:/data
     healthcheck:
-      test: ["CMD", "/bin/bash", "-c", "echo > /dev/tcp/127.0.0.1/9000"]
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 9000 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
-
-  # Auto-configurador de Buckets de MinIO (Crea el bucket oficial al iniciar)
-  minio-init:
-    image: cgr.dev/chainguard/minio:latest
-    container_name: casillas_minio_init
-    depends_on:
-      minio:
-        condition: service_healthy
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
-      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME:-casillas-notificaciones}
-    entrypoint:
-      - /bin/bash
-      - -c
-      - >
-        until mc alias set local http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"; do
-          echo "Esperando que MinIO responda...";
-          sleep 2;
-        done;
-        mc mb --ignore-existing local/"$${MINIO_BUCKET_NAME}";
-        mc anonymous set download local/"$${MINIO_BUCKET_NAME}";
-        echo "Bucket de Casillas MTC Puno inicializado con éxito.";
-        exit 0;
 
   # Redis para broker de tareas de background, locks y cache de tokens MTC
   redis:
@@ -94,23 +73,28 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-casillas_secret_pass}
       POSTGRES_DB: ${POSTGRES_DB:-casillas_db}
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-casillas_user}:${POSTGRES_PASSWORD:-casillas_secret_pass}@postgres:5432/${POSTGRES_DB:-casillas_db}
-      MINIO_ENDPOINT: minio:9000
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
-      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME:-casillas-notificaciones}
+      STORAGE_TYPE: rustfs
+      RUSTFS_ENDPOINT: rustfs:9000
+      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:-rustfsadmin}
+      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:-rustfsadmin123}
+      RUSTFS_BUCKET_NAME: ${RUSTFS_BUCKET_NAME:-casillas-notificaciones}
+      MINIO_ENDPOINT: rustfs:9000
+      MINIO_ROOT_USER: ${RUSTFS_ACCESS_KEY:-rustfsadmin}
+      MINIO_ROOT_PASSWORD: ${RUSTFS_SECRET_KEY:-rustfsadmin123}
+      MINIO_BUCKET_NAME: ${RUSTFS_BUCKET_NAME:-casillas-notificaciones}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       MTC_BASE_URL: ${MTC_BASE_URL:-https://wscasilla.mtc.gob.pe/ms-notific/v2/servicios-publicos}
       MTC_CLIENT_ID: ${MTC_CLIENT_ID}
       MTC_CLIENT_SECRET: ${MTC_CLIENT_SECRET}
-      MTC_DRTC_BASE_URL: ${MTC_DRTC_BASE_URL:-https://mtc.transportespuno.gob.pe/api/v2}
+      MTC_DRTC_BASE_URL: ${MTC_DRTC_BASE_URL:-https://casillas.transportespuno.gob.pe/api/v2}
       MTC_DRTC_API_KEY: ${MTC_DRTC_API_KEY:-topSecret123}
     volumes:
       - ./backend:/app
     depends_on:
       postgres:
         condition: service_healthy
-      minio:
+      rustfs:
         condition: service_healthy
 
   # Frontend: Angular 22 servido con Nginx
@@ -128,7 +112,7 @@ services:
 volumes:
   postgres_data:
     name: casillas_postgres_data
-  minio_data:
-    name: casillas_minio_data
+  rustfs_data:
+    name: casillas_rustfs_data
   redis_data:
     name: casillas_redis_data

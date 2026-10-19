@@ -11,27 +11,33 @@ logger = logging.getLogger(__name__)
 
 class StorageService:
     """
-    Servicio de almacenamiento de objetos con MinIO/S3.
-    Garantiza inmutabilidad y cálculo de SHA-256 para validez legal.
+    Servicio de almacenamiento de objetos con RustFS (S3-compatible).
+    Garantiza inmutabilidad y cálculo de SHA-256 para validez legal bajo D.S. 001-2020-MTC.
     """
 
     def __init__(self):
+        endpoint = getattr(settings, "RUSTFS_ENDPOINT", None) or settings.MINIO_ENDPOINT
+        access_key = getattr(settings, "RUSTFS_ACCESS_KEY", None) or settings.MINIO_ROOT_USER
+        secret_key = getattr(settings, "RUSTFS_SECRET_KEY", None) or settings.MINIO_ROOT_PASSWORD
+        secure = getattr(settings, "RUSTFS_SECURE", None) if hasattr(settings, "RUSTFS_SECURE") else settings.MINIO_SECURE
+
+        self.endpoint = endpoint
         self.client = Minio(
-            endpoint=settings.MINIO_ENDPOINT,
-            access_key=settings.MINIO_ROOT_USER,
-            secret_key=settings.MINIO_ROOT_PASSWORD,
-            secure=settings.MINIO_SECURE,
+            endpoint=endpoint,
+            access_key=access_key,
+            secret_key=secret_key,
+            secure=secure,
         )
-        self.bucket_name = settings.MINIO_BUCKET_NAME
+        self.bucket_name = getattr(settings, "RUSTFS_BUCKET_NAME", None) or settings.MINIO_BUCKET_NAME
         self._ensure_bucket_exists()
 
     def _ensure_bucket_exists(self) -> None:
         try:
             if not self.client.bucket_exists(self.bucket_name):
                 self.client.make_bucket(self.bucket_name)
-                logger.info(f"Bucket '{self.bucket_name}' creado con éxito.")
+                logger.info(f"Bucket RustFS '{self.bucket_name}' creado con éxito.")
         except S3Error as e:
-            logger.error(f"Error verificando/creando bucket en MinIO: {e}")
+            logger.error(f"Error verificando/creando bucket en RustFS S3: {e}")
 
     @staticmethod
     def calculate_sha256(data: bytes) -> str:
@@ -96,9 +102,10 @@ class StorageService:
             if not exists:
                 return {
                     "status": "error",
-                    "mensaje": f"El bucket '{self.bucket_name}' no existe.",
+                    "mensaje": f"El bucket '{self.bucket_name}' no existe en RustFS.",
+                    "motor": "RustFS S3",
                     "bucket": self.bucket_name,
-                    "endpoint": settings.MINIO_ENDPOINT,
+                    "endpoint": self.endpoint,
                     "total_objects": 0,
                     "total_bytes": 0
                 }
@@ -108,22 +115,24 @@ class StorageService:
             
             return {
                 "status": "en_linea",
-                "mensaje": "Clúster MinIO S3 conectado y operando con integridad WORM.",
-                "endpoint": settings.MINIO_ENDPOINT,
+                "motor": "RustFS S3",
+                "mensaje": "Clúster RustFS S3 conectado y operando con integridad WORM.",
+                "endpoint": self.endpoint,
                 "bucket": self.bucket_name,
                 "bucket_exists": True,
                 "total_objects": len(objects),
                 "total_bytes": total_bytes,
                 "total_mb": round(total_bytes / (1024 * 1024), 2),
-                "secure": settings.MINIO_SECURE,
-                "host_publico": settings.MINIO_PUBLIC_URL_BASE
+                "secure": getattr(settings, "RUSTFS_SECURE", None) if hasattr(settings, "RUSTFS_SECURE") else settings.MINIO_SECURE,
+                "host_publico": getattr(settings, "RUSTFS_PUBLIC_URL_BASE", None) or settings.MINIO_PUBLIC_URL_BASE
             }
         except Exception as e:
-            logger.error(f"Error consultando estado de MinIO: {e}")
+            logger.error(f"Error consultando estado de RustFS: {e}")
             return {
                 "status": "desconectado",
+                "motor": "RustFS S3",
                 "mensaje": str(e),
-                "endpoint": settings.MINIO_ENDPOINT,
+                "endpoint": self.endpoint,
                 "bucket": self.bucket_name,
                 "bucket_exists": False,
                 "total_objects": 0,

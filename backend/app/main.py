@@ -61,6 +61,9 @@ async def health_check():
         "status": "online",
         "service": settings.PROJECT_NAME,
         "environment": settings.ENVIRONMENT,
+        "storage_type": getattr(settings, "STORAGE_TYPE", "rustfs"),
+        "storage_endpoint": getattr(settings, "RUSTFS_ENDPOINT", settings.MINIO_ENDPOINT),
+        "rustfs_endpoint": getattr(settings, "RUSTFS_ENDPOINT", settings.MINIO_ENDPOINT),
         "minio_endpoint": settings.MINIO_ENDPOINT,
         "mtc_endpoint": settings.MTC_BASE_URL
     }

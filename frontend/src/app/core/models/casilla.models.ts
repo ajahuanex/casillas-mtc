@@ -11,6 +11,10 @@ export interface CasillaData {
   correo?: string;
   telefono?: string;
   direccion?: string;
+  representanteLegal?: string;
+  estadoDomiciliacion?: string;
+  entorno?: string;
+  servidorHost?: string;
   ubigeo?: string;
   fechaCreacion?: string;
   [key: string]: any;
@@ -19,6 +23,8 @@ export interface CasillaData {
 export interface CasillaInfo {
   success: boolean;
   message: string;
+  entorno?: string;
+  servidorHost?: string;
   data: CasillaData;
   errors?: any;
 }
