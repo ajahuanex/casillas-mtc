@@ -122,42 +122,38 @@ class MTCAdminService:
             key_captcha = captcha_key
 
             if is_automatic:
-                logger.info(f"[MTCAdmin] Intento {intento}/{max_intentos}: Solicitando nuevo captcha al MTC...")
-                captcha_data = await self.obtener_captcha()
-                b64_img = captcha_data.get("img")
-                key_captcha = captcha_data.get("key")
+                logger.info(f"[MTCAdmin] Intento de login {intento}/{max_intentos}: Buscando captcha con 6 caracteres...")
+                # Adquisición segura: el endpoint /captcha no consume intentos de login.
+                # Si una imagen da != 6 caracteres, se descarta inmediatamente en memoria y se pide otra.
+                adquirido = False
+                for fetch_try in range(1, 5):
+                    try:
+                        captcha_data = await self.obtener_captcha()
+                        cand_b64 = captcha_data.get("img")
+                        cand_key = captcha_data.get("key")
 
-                if not b64_img or not key_captcha:
-                    raise HTTPException(
-                        status_code=status.HTTP_502_BAD_GATEWAY,
-                        detail="El MTC no devolvió los campos 'img' o 'key' requeridos para el captcha."
-                    )
+                        if not cand_b64 or not cand_key:
+                            continue
 
-                try:
-                    texto_captcha = resolve_ocr(b64_img)
-                except Exception as ocr_err:
-                    logger.error(f"[MTCAdmin] Falló la resolución OCR en intento {intento}: {ocr_err}")
-                    if intento == max_intentos:
-                        # Si el OCR falla en su último intento, proporcionar un captcha fresco para resolución manual
-                        fresh = await self.obtener_captcha()
-                        raise HTTPException(
-                            status_code=status.HTTP_400_BAD_REQUEST,
-                            detail={
-                                "message": f"Fallo en resolución automática OCR: {str(ocr_err)}. Ingrese el texto manualmente.",
-                                "requires_manual_captcha": True,
-                                "captcha_img": fresh.get("img"),
-                                "captcha_key": fresh.get("key")
-                            }
-                        )
-                    continue
+                        cand_text = resolve_ocr(cand_b64, strict_6_chars=True)
+                        if cand_text and len(cand_text) == 6:
+                            texto_captcha = cand_text
+                            key_captcha = cand_key
+                            adquirido = True
+                            logger.info(f"[MTCAdmin] Captcha óptimo de 6 caracteres verificado: '{texto_captcha}' (sub-intento {fetch_try})")
+                            break
+                        else:
+                            logger.warning(f"[MTCAdmin] Captcha descartado por longitud != 6 ({len(cand_text) if cand_text else 0}): '{cand_text}'. Pidiendo reemplazo...")
+                    except Exception as ocr_err:
+                        logger.warning(f"[MTCAdmin] Sub-intento {fetch_try} descartado por OCR ({ocr_err}). Reintentando adquisición...")
 
-                if not texto_captcha:
+                if not adquirido or not texto_captcha or len(texto_captcha) != 6:
                     if intento == max_intentos:
                         fresh = await self.obtener_captcha()
                         raise HTTPException(
                             status_code=status.HTTP_400_BAD_REQUEST,
                             detail={
-                                "message": "El motor OCR no pudo extraer los caracteres con certeza. Ingrese el captcha manualmente.",
+                                "message": "El motor OCR no pudo obtener un captcha de 6 caracteres con total certeza. Ingrese el captcha manualmente.",
                                 "requires_manual_captcha": True,
                                 "captcha_img": fresh.get("img"),
                                 "captcha_key": fresh.get("key")
@@ -170,6 +166,12 @@ class MTCAdminService:
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail="En modo manual se debe proporcionar 'captcha_text' y 'captcha_key'."
                     )
+                if len(texto_captcha.strip()) != 6:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="El captcha del MTC debe tener exactamente 6 caracteres alfanuméricos."
+                    )
+                texto_captcha = texto_captcha.strip().upper()
 
             # 2. Construir payload oficial del MTC con compatibilidad dual
             payload = {

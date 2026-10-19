@@ -20,18 +20,30 @@ async def obtener_captcha_endpoint(
 ) -> Dict[str, Any]:
     """
     Obtiene un nuevo Captcha del MTC (POST /ms-seguridad/seguridad/captcha)
-    y opcionalmente resuelve el texto mediante OCR.
+    y opcionalmente resuelve el texto mediante OCR asegurando exactamente 6 caracteres.
     """
-    captcha_data = await mtc_admin_service.obtener_captcha()
-    b64_img = captcha_data.get("img", "")
-    key = captcha_data.get("key", "")
-
+    b64_img = ""
+    key = ""
     resolved = None
-    if auto_resolve and b64_img:
-        try:
-            resolved = resolve_ocr(b64_img)
-        except Exception:
-            resolved = None
+
+    if auto_resolve:
+        # Intentar hasta 3 veces obtener un captcha que resuelva estrictamente a 6 caracteres
+        for _ in range(3):
+            captcha_data = await mtc_admin_service.obtener_captcha()
+            b64_img = captcha_data.get("img", "")
+            key = captcha_data.get("key", "")
+            if b64_img:
+                try:
+                    candidate = resolve_ocr(b64_img, strict_6_chars=True)
+                    if candidate and len(candidate) == 6:
+                        resolved = candidate
+                        break
+                except Exception:
+                    resolved = None
+    else:
+        captcha_data = await mtc_admin_service.obtener_captcha()
+        b64_img = captcha_data.get("img", "")
+        key = captcha_data.get("key", "")
 
     return {
         "img": b64_img,

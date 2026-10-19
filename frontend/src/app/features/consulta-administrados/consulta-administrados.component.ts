@@ -116,11 +116,11 @@ export class ConsultaAdministradosComponent implements OnInit {
   solicitarCaptchaManual(): void {
     this.cargandoCaptchaManual.set(true);
     this.errorMensaje.set(null);
-    this.mtcService.obtenerCaptcha(false).subscribe({
+    this.mtcService.obtenerCaptcha(true).subscribe({
       next: (data) => {
         this.captchaManualImg.set(data.img);
         this.captchaManualKey.set(data.key);
-        this.captchaManualTexto.set('');
+        this.captchaManualTexto.set(data.resolved_text || '');
         this.mostrarInputManual.set(true);
         this.cargandoCaptchaManual.set(false);
       },
